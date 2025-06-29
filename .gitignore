@@ -1,0 +1,10 @@
+.env
+cmd.txt
+
+src/faiss_index.index
+src/id_to_text_mapping.txt
+
+Corpus/corpus.txt
+Corpus/prod_dataset.csv
+
+.idea/

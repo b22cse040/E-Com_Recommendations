@@ -1,0 +1,8 @@
+elasticsearch
+faiss-cpu
+langchain
+numpy
+polars
+python-dotenv
+sentence-transformers
+tqdm
