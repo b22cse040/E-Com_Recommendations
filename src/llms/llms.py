@@ -9,8 +9,13 @@ load_dotenv()
 embedding_model_name = os.getenv('EMBEDDING_MODEL')
 model_name = os.getenv('MODEL_NAME')
 
-def form_query_input(query: str, top_k_results: list[dict]) -> dict:
-  pass
+def form_query_input(query: str, top_k_results: list[dict]) -> str:
+  input: str = query + "\n"
+  for i, result in enumerate(top_k_results):
+    input += f"\nItem {i + 1}:\n"
+    for key, value in result.items():
+      input += f"{key}: {value}\n"
+  return input
 
 def form_response(embedding_model_name: str, query: str, model_name: str):
   query = query.lower().strip()
@@ -19,15 +24,10 @@ def form_response(embedding_model_name: str, query: str, model_name: str):
 
   client = genai.Client()
   top_k_results = search_query(query, top_k=10)
-  top_k = ""
-  for result in top_k_results:
-    content = result["content"]
-    score = result["score"]
-    top_k += f"Score: {score}\nContent: {content}\n\n"
 
   response=client.models.generate_content(
     model=model_name,
-    contents=_RANKER_PROMPT + top_k
+    contents=_RANKER_PROMPT + form_query_input(query, top_k_results),
   )
 
   return response
