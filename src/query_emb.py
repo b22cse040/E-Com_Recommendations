@@ -14,9 +14,9 @@ es = Elasticsearch(
 )
 
 # ========================================================================
-MODEL_NAME = "all-MiniLM-L6-v2"
+EMBEDDING_MODEL_NAME = "all-MiniLM-L6-v2"
 
-model = SentenceTransformer(MODEL_NAME)
+model = SentenceTransformer(EMBEDDING_MODEL_NAME)
 def search_elasticsearch_embedding(query: str, top_k: int = 5) -> list[dict]:
   '''
   Performs kNN search on Elasticsearch using dense embeddings.
@@ -83,9 +83,6 @@ def search_query(query: str, top_k: int = 5) -> list[dict]:
   keywords_hits = search_es_keywords(query, top_k)
   top_hits = semantic_hits + keywords_hits
   return top_hits
-
-def form_response(top_hits: list[dict], model: str) -> str:
-  pass
 
 if __name__ == "__main__":
   hits = search_query("headpnhoes", top_k=3)

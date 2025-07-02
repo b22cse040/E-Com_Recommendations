@@ -1,5 +1,6 @@
 elasticsearch
 faiss-cpu
+google-genai
 langchain
 numpy
 polars
