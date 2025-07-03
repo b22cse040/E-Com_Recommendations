@@ -6,4 +6,5 @@ numpy
 polars
 python-dotenv
 sentence-transformers
+streamlit
 tqdm

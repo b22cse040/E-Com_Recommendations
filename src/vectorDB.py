@@ -41,24 +41,24 @@ es = Elasticsearch(
 )
 # =========================================================================
 
-# def create_index(es_client, index_name, embedding_dim=384):
-#   if es_client.indices.exists(index=index_name):
-#     es_client.indices.delete(index=index_name)
-#     print("Delete index " + index_name)
-#
-#   mapping = {
-#     "mappings": {
-#       "properties": {
-#         "text": {"type": "text"},
-#         "embedding": {"type": "dense_vector", "dims": embedding_dim},
-#         "type": {"type": "keyword"},
-#         "uuid": {"type": "keyword"}
-#       }
-#     }
-#   }
-#
-#   es_client.indices.create(index=index_name, body=mapping)
-#   print(f"Index '{index_name}' created.")
+def create_index(es_client, index_name, embedding_dim=384):
+  if es_client.indices.exists(index=index_name):
+    es_client.indices.delete(index=index_name)
+    print("Delete index " + index_name)
+
+  mapping = {
+    "mappings": {
+      "properties": {
+        "text": {"type": "text"},
+        "embedding": {"type": "dense_vector", "dims": embedding_dim},
+        "type": {"type": "keyword"},
+        "uuid": {"type": "keyword"}
+      }
+    }
+  }
+
+  es_client.indices.create(index=index_name, body=mapping)
+  print(f"Index '{index_name}' created.")
 
 def index_chunk(es_client, index_name, text, embedding, chunk_type):
   doc = {
@@ -80,12 +80,12 @@ def process_and_index(file_path, index_name, chunk_type, embedder, es_client):
 if __name__ == "__main__":
   index_name = "corpus_chunks"
   embedding_dim = 384
-  # create_index(es, index_name, embedding_dim)
+  create_index(es, index_name, embedding_dim)
 
   # Process product corpus
-  process_and_index(prod_corpus, index_name, embedding_dim, embedder, es)
+  process_and_index(prod_corpus, index_name, "product", embedder, es)
 
   # Process query corpus
-  process_and_index(query_corpus, index_name, embedding_dim, embedder, es)
+  process_and_index(query_corpus, index_name, "query", embedder, es)
 
   print("All chunks indexed successfully.")

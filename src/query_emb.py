@@ -81,6 +81,9 @@ def search_es_keywords(query: str, top_k: int = 5) -> list[dict]:
 
   return results
 
+## Average time for parallel: 0.0589 sec, check evals directory
+## Average time for sequentially: 0.1068 sec, check evals directory
+## Optimization: 44.85% optimization in time
 def search_query(query: str, top_k: int = 5) -> list[dict]:
   """
   Find the most relevant keyword and semantic hits for thw query in parallel.
@@ -127,14 +130,20 @@ def search_similar_queries(query: str, top_k: int = 2) -> list[dict]:
 
   # Search for top_k similar queries
   knn_query = {
-    "knn" : {
-      "field": "embedding",
-      "query_vector": query_embedding.tolist(),
-      "k": top_k,
-      "num_candidates": top_k,
-    },
-    "filter" : {
-      "term" : {"type" : "query"}
+    "query": {
+      "bool": {
+        "filter": [
+          {"term": {"type": "query"}}
+        ],
+        "must": {
+          "knn": {
+            "field": "embedding",
+            "query_vector": query_embedding.tolist(),
+            "k": top_k,
+            "num_candidates": 20
+          }
+        }
+      }
     }
   }
 
@@ -154,12 +163,14 @@ def search_similar_queries(query: str, top_k: int = 2) -> list[dict]:
 
 if __name__ == "__main__":
   queries = ["sunflowers", "bedshits and mattersess", "Headphones", "wine bar", "wall art"]
-
-  for query in queries:
-    hits = search_query(query, top_k=10)
+  #
+  # for query in queries:
+  #   hits = search_query(query, top_k=10)
     # for hit in hits:
     #   print(f"{hit['content']}\nScore: {hit['score']:.4f}\n{'='*50}")
-
-  ## Average time for parallel: 0.0589 sec, check evals directory
-  ## Average time for sequentially: 0.1068 sec, check evals directory
-  ## Optimization: 44.85% optimization in time
+  for query in queries:
+    print(query, ": \n")
+    results = search_similar_queries(query)
+    for result in results:
+      print(f"{result}\n")
+    print('=' * 65)
