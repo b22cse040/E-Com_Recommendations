@@ -1,0 +1,10 @@
+Got 20 hits in 0.1477 seconds for the query: sunflowers
+Got 20 hits in 0.1126 seconds for the query: bedshits and mattersess
+Got 18 hits in 0.1032 seconds for the query: Headphones
+Got 20 hits in 0.0959 seconds for the query: wine bar
+Got 20 hits in 0.0745 seconds for the query: wall art
+Got 20 hits in 0.1127 seconds for the query: sunflowers [PARALLEL]
+Got 20 hits in 0.0662 seconds for the query: bedshits and mattersess [PARALLEL]
+Got 18 hits in 0.0398 seconds for the query: Headphones [PARALLEL]
+Got 20 hits in 0.0440 seconds for the query: wine bar [PARALLEL]
+Got 20 hits in 0.0316 seconds for the query: wall art [PARALLEL]
