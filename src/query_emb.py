@@ -92,7 +92,7 @@ def search_query(query: str, top_k: int = 5) -> list[dict]:
     A concatenated list of top k results of both searches, yielding a lisk of
     size 2k.
   """
-  start_time = time.time()
+  # start_time = time.time()
   # semantic_hits = search_elasticsearch_embedding(query, top_k)
   # keywords_hits = search_es_keywords(query, top_k)
   # top_hits = semantic_hits + keywords_hits
@@ -105,11 +105,11 @@ def search_query(query: str, top_k: int = 5) -> list[dict]:
     keyword_hits = future_keywords.result()
 
   top_hits = semantic_hits + keyword_hits
-  total_time = time.time() - start_time
-  file_path = "../evals/search_query.txt"
-
-  with open(file_path, "a") as f:
-    f.write(f"Got {len(top_hits)} hits in {total_time:.4f} seconds for the query: {query} [PARALLEL]\n")
+  # total_time = time.time() - start_time
+  # file_path = "../evals/search_query.txt"
+  #
+  # with open(file_path, "a") as f:
+  #   f.write(f"Got {len(top_hits)} hits in {total_time:.4f} seconds for the query: {query} [PARALLEL]\n")
   return top_hits
 
 def search_similar_queries(query: str, top_k: int = 2) -> list[dict]:
