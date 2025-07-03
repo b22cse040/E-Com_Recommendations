@@ -1,40 +1,91 @@
 import os
-import logging
 import uuid
-import faiss
-import numpy as np
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from tqdm import tqdm
+from dotenv import load_dotenv
+from elasticsearch import Elasticsearch
 from sentence_transformers import SentenceTransformer
 
-logging.basicConfig(level=logging.INFO)
+load_dotenv()
 
-filepath = r"D:\Sparkathon\Corpus\corpus.txt"  # corrected path
-with open(filepath, "r", encoding="utf-8") as f:
-    raw_text = f.read()
+prod_corpus = "../Corpus/prod_corpus.txt"
+query_corpus = "../Corpus/query_corpus.txt"
 
-splitter = RecursiveCharacterTextSplitter(
-    separators=["\n\n", "\n", " "],
-    chunk_size=300,
-    chunk_overlap=75
+embedding_model_name = os.getenv("EMBEDDING_MODEL_NAME")
+
+def extract_chunks_from_file(filepath):
+  with open(filepath, "r", encoding="utf-8") as f:
+    text = f.read()
+
+  # Split by  [CLS] and keep only non-empty pieces
+  raw_chunks = text.split("[CLS]")
+  chunks = []
+  for chunk in raw_chunks:
+    chunk = chunk.strip()
+    if chunk.endswith("[SEP]"):
+      chunk = chunk[:-5].strip() # remove "[SEP]"
+    if chunk:
+      chunks.append(chunk)
+  return chunks
+
+embedder = SentenceTransformer(embedding_model_name)
+def embed_text(text, embedder):
+  embeddings = embedder.encode(text)
+  return embeddings.tolist()
+
+# =========================================================================
+ca_certs = os.getenv("ELASTICSEARCH_CA_CERTIFICATE")
+es = Elasticsearch(
+    "https://localhost:9200",
+    basic_auth=("elastic", os.getenv("ELASTICSEARCH_PASSWORD")),
+    ca_certs=ca_certs,
 )
-chunks = splitter.split_text(raw_text)
-logging.info(f"Chunking complete. Total chunks created: {len(chunks)}")
+# =========================================================================
 
-embedder = SentenceTransformer('all-MiniLM-L6-v2')
-embeddings = embedder.encode(chunks, show_progress_bar=True)
-embeddings = np.array(embeddings).astype("float32")
+def create_index(es_client, index_name, embedding_dim=384):
+  if es_client.indices.exists(index=index_name):
+    es_client.indices.delete(index=index_name)
+    print("Delete index " + index_name)
 
-# Create FAISS index
-dimension = embeddings.shape[1]  # Should be 384
-index = faiss.IndexFlatL2(dimension)
-index.add(embeddings)
-logging.info("FAISS index created and vectors added.")
+  mapping = {
+    "mappings": {
+      "properties": {
+        "text": {"type": "text"},
+        "embedding": {"type": "dense_vector", "dims": embedding_dim},
+        "type": {"type": "keyword"},
+        "uuid": {"type": "keyword"}
+      }
+    }
+  }
 
-id_to_text = {i: chunks[i] for i in range(len(chunks))}
+  es_client.indices.create(index=index_name, body=mapping)
+  print(f"Index '{index_name}' created.")
 
-faiss.write_index(index, "faiss_index.index")
-with open("id_to_text_mapping.txt", "w", encoding="utf-8") as f:
-  for i, text in id_to_text.items():
-    f.write(f"{i}\t{text.replace('\n', ' ')}\n")
+def index_chunk(es_client, index_name, text, embedding, chunk_type):
+  doc = {
+    "text": text,
+    "embedding": embedding,
+    "type": chunk_type,
+    "uuid": str(uuid.uuid4())
+  }
+  es_client.index(index=index_name, body=doc)
 
-logging.info("Index and mapping saved.")
+def process_and_index(file_path, index_name, chunk_type, embedder, es_client):
+  chunks = extract_chunks_from_file(file_path)
+  print(f"Extracted {len(chunks)} chunks from {file_path}")
+
+  for chunk in tqdm(chunks, desc=f"Indexing {chunk_type}", unit="chunk"):
+    embedding = embed_text(chunk, embedder)
+    index_chunk(es_client, index_name, chunk, embedding, chunk_type)
+
+if __name__ == "__main__":
+  index_name = "corpus_chunks"
+  embedding_dim = 384
+  create_index(es, index_name, embedding_dim)
+
+  # Process product corpus
+  process_and_index(prod_corpus, index_name, embedding_dim, embedder, es)
+
+  # Process query corpus
+  process_and_index(query_corpus, index_name, embedding_dim, embedder, es)
+
+  print("All chunks indexed successfully.")
