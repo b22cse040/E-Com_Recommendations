@@ -1,9 +1,3 @@
-import os
-from dotenv import load_dotenv
-
-load_dotenv()
-MODEL_NAME = os.getenv("MODEL_NAME")
-
 _RANKER_PROMPT="""
   You are an expert product recommendation and description assistant.
   
