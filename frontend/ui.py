@@ -1,7 +1,7 @@
 import os, json, re
 import streamlit as st
 from dotenv import load_dotenv
-from llms.llms import form_response
+from src.llms.llms import form_response
 
 load_dotenv()
 model_name = os.getenv('MODEL_NAME')
@@ -36,7 +36,6 @@ if user_input:
     except Exception as e:
       results = {}
       st.error(f"An error occurred: {e}")
-
 
 
   if not results:

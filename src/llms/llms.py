@@ -1,8 +1,8 @@
 import os, json, re
 from dotenv import load_dotenv
 from google import genai
-from llms.prompts import _RANKER_PROMPT
-from query_emb import search_query
+from src.llms.prompts import _RANKER_PROMPT, _CONTEXT_PROVIDER_PROMPT
+from src.query_emb import search_query
 
 load_dotenv()
 model_name = os.getenv('MODEL_NAME')
@@ -22,6 +22,13 @@ def form_response(query: str, model_name: str):
   query = query.lower().strip()
 
   client = genai.Client()
+
+  ## Adding more context to the query so as to obtain better embeddings
+  expanded_query = client.models.generate_content(
+    model=model_name,
+    contents=_CONTEXT_PROVIDER_PROMPT + query
+  )
+
   top_k_results = search_query(query, top_k=10)
   input_text = _RANKER_PROMPT + form_query_input(query, top_k_results)
 
@@ -66,19 +73,19 @@ def form_response(query: str, model_name: str):
 
   return json.dumps(final_results, indent=2)
 
-# if __name__ == '__main__':
-#   query = "Bedsheets and mattresses"
-#
-#   model_name = os.getenv('MODEL_NAME')
-#
-#   results = form_response(query, model_name)
-#   if not results:
-#     print("No valid products in the DB")
-#
-#   else:
-#     for obj_key, obj_value in results.items():
-#       print(f"--- {obj_key} ---")
-#       print(f"Name: {obj_value['Name']}")
-#       print(f"Explanation: {obj_value['Explanation']}")
-#       print(f"Score: {obj_value['Score']}")
-#       print()
+if __name__ == '__main__':
+  query = "Bedsheets and mattresses"
+
+  model_name = os.getenv('MODEL_NAME')
+
+  results = form_response(query, model_name)
+  if not results:
+    print("No valid products in the DB")
+
+  else:
+    parsed_results = json.loads(results)
+    for obj_key, obj_value in parsed_results.items():
+      print(f"--- {obj_key} ---")
+      print(f"Name: {obj_value['Name']}")
+      print(f"Explanation: {obj_value['Explanation']}")
+      print(f"Score: {obj_value['score']}")
