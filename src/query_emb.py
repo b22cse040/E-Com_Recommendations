@@ -1,4 +1,5 @@
 import os, time
+import numpy as np
 from dotenv import load_dotenv
 from sentence_transformers import SentenceTransformer
 from elasticsearch import Elasticsearch
@@ -115,7 +116,7 @@ def search_query(query: str, top_k: int = 5) -> list[dict]:
   #   f.write(f"Got {len(top_hits)} hits in {total_time:.4f} seconds for the query: {query} [PARALLEL]\n")
   return top_hits
 
-def search_similar_queries(query: str, top_k: int = 2) -> list[dict]:
+def search_similar_queries(query: str, top_k: int = 2) -> list[str]:
   """
   Search for similar queries (chunk_type = 'query') in Elasticsearch.
 
@@ -124,7 +125,7 @@ def search_similar_queries(query: str, top_k: int = 2) -> list[dict]:
     top_k (int): Number of similar queries to return
 
   Returns:
-    List of dicts with 'query_text' and 'score'
+    List of string with 'query_text'
   """
   query_embedding = model.encode(query)
 
@@ -154,15 +155,31 @@ def search_similar_queries(query: str, top_k: int = 2) -> list[dict]:
 
   results = []
   for hit in response["hits"]["hits"]:
-    results.append({
-      "content": hit["_source"]["text"],
-      "score": hit["_score"],
-    })
+    # results.append({
+    #   "content": hit["_source"]["text"],
+    #   "score": hit["_score"],
+    # })
+    text = hit["_source"]["text"]
+    score = hit["_score"]
+    # print(type(score))
+
+    if isinstance(score, (np.integer, np.floating)):
+      score = float(score)
+
+    # print(type(score))
+
+    results.append(text)
 
   return results
 
 if __name__ == "__main__":
-  queries = ["sunflowers", "bedshits and mattersess", "Headphones", "wine bar", "wall art"]
+  queries = [
+    "sunflowers",
+    "bedshits and mattersess",
+    "Headphones",
+    "wine bar",
+    "wall art"
+  ]
   #
   # for query in queries:
   #   hits = search_query(query, top_k=10)

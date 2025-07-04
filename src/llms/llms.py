@@ -1,4 +1,5 @@
 import os, json, re
+import numpy as np
 from dotenv import load_dotenv
 from google import genai
 from src.llms.prompts import _RANKER_PROMPT, _CONTEXT_PROVIDER_PROMPT
@@ -55,12 +56,15 @@ def form_response(query: str, model_name: str):
     explanation = obj_value["Explanation"]
     score = obj_value["score"]
 
-    if not isinstance(explanation, str):
-      continue
-    if not isinstance(score, float):
-      continue
-    if not isinstance(name, str):
-      continue
+    if isinstance(explanation, str):
+      explanation = explanation.strip()
+    if isinstance(name, str):
+      name = name.strip()
+
+    # print(f"Type before float conversion: {type(score)}")
+    if isinstance(score, (int, float, np.integer, np.floating)):
+      score = float(score)
+    # print(f"Type before float conversion: {type(score)}")
 
     if score < 0 or score > 1:
       continue
