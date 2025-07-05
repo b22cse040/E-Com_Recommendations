@@ -1,0 +1,12 @@
+Query: sunflower
+Main query response time: 4.7643 sec
+Similar query search time: 0.0578 sec
+Similar query response time: 5.4803 sec
+Similar queries thread time: 5.4816 sec
+----
+Query: sunflower
+Main query response time: 6.0529 sec
+Similar query search time: 0.0711 sec
+Similar query response time: 6.7109 sec
+Similar queries thread time: 6.7127 sec
+----
