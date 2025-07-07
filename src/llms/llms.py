@@ -111,7 +111,7 @@ def form_response(query: str, model_name: str):
   query_vector = compute_vector(query, embedder)
   cached_response = find_cached_similar_query(query_vector)
   if cached_response:
-    return json.dumps(cached_response, indent=2)
+    return cached_response
 
   client = genai.Client()
 
