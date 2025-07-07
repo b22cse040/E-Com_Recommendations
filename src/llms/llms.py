@@ -2,12 +2,19 @@ import os, json, re
 import numpy as np
 from dotenv import load_dotenv
 from google import genai
+from redis import Redis
+from sentence_transformers import SentenceTransformer
 from src.llms.prompts import _RANKER_PROMPT, _CONTEXT_PROVIDER_PROMPT
 from src.query_emb import search_query
 
+# -----------------------------------------------------------------------
 load_dotenv()
+embedder_model_name = os.getenv('EMBEDDING_MODEL_NAME')
 model_name = os.getenv('MODEL_NAME')
+redis_client = Redis(host='localhost', port=6379, decode_responses=True)
+embedder = SentenceTransformer(embedder_model_name)
 
+# -----------------------------------------------------------------------
 ## Formats the input for LLM
 def form_query_input(query: str, top_k_results: list[dict]) -> str:
   input: str = f"Query: {query}\nProduct Chunks: \n"
@@ -25,31 +32,16 @@ def expand_query(query: str, client: genai.client) -> str:
   )
   return expanded_query.text.strip()
 
-## Inputs the prompt and Input to return a JSON like response
-## that handles ranking of items.
-def form_response(query: str, model_name: str):
-  query = query.lower().strip()
-
-  client = genai.Client()
-
-  ## Adding more context to the query so as to obtain better embeddings
-  expanded_query = expand_query(query, client)
-  print(expanded_query)
-
-  top_k_results = search_query(expanded_query, top_k=10)
-  input_text = _RANKER_PROMPT + form_query_input(query, top_k_results)
-
-  response=client.models.generate_content(
-    model=model_name,
-    contents=input_text,
-  )
-
-  raw_text = response.text
+def clean_response(raw_text: str):
+  """
+  Clean LLM raw text output and convert to structured dict with validated field
+  """
+  # Remove ```json or``` markers
   clean_text = re.sub(r"```(json)?", "", raw_text, flags=re.IGNORECASE).strip()
   try:
     parsed_results = json.loads(clean_text)
   except json.JSONDecodeError:
-    print(f"Warning: Response is not Valid JSON. Raw output:\n{raw_text}")
+    print(f"Warning: Response is not valid JSON. Raw output:\n{raw_text}")
     parsed_results = {}
 
   final_results = {}
@@ -82,6 +74,70 @@ def form_response(query: str, model_name: str):
     }
 
   return json.dumps(final_results, indent=2)
+# ------------------------------------------------------------------------
+def compute_vector(text: str, embedder: SentenceTransformer) -> np.ndarray:
+  return embedder.encode([text], normalize_embeddings=True)[0]
+
+def cosine_similarity(vector1: np.ndarray, vector2: np.ndarray) -> float:
+  # Note both embeddings are already normalized
+  dot_product  = np.dot(vector1, vector2)
+  return dot_product
+
+def cache_query(query: str, query_vector: np.ndarray, response, expiry: int=7200) -> None:
+  # response id JSON format
+  key = f"query_cache:{query.lower().strip()}"
+  data = {
+    "query" : query,
+    "query_vector" : query_vector.tolist(),
+    "llm_response" : response,
+  }
+  redis_client.setex(key, expiry, json.dumps(data))
+
+def find_cached_similar_query(new_vector: np.ndarray, threshold=0.9):
+  for key in redis_client.scan_iter(match="query_cache:*"):
+    cached_data = json.loads(redis_client.get(key))
+    cached_vector = np.array(cached_data["query_vector"], dtype=np.float32)
+    sim = cosine_similarity(new_vector, cached_vector)
+    if sim >= threshold:
+      print(f"Found similar query: {cached_data['query']} (similarity: {sim:.4f})")
+      return cached_data["llm_response"]
+  return None
+# ---------------------------------------------------------------------------
+
+## Inputs the prompt and Input to return a JSON like response
+## that handles ranking of items.
+def form_response(query: str, model_name: str):
+  query = query.lower().strip()
+  query_vector = compute_vector(query, embedder)
+  cached_response = find_cached_similar_query(query_vector)
+  if cached_response:
+    return json.dumps(cached_response, indent=2)
+
+  client = genai.Client()
+
+  ## Adding more context to the query so as to obtain better embeddings
+  expanded_query = expand_query(query, client)
+  print(expanded_query)
+
+  # Finding the top-k results keyword and semantically
+  top_k_results = search_query(expanded_query, top_k=10)
+
+  # forming input for LLM -> LLM(prompt + input)
+  input_text = _RANKER_PROMPT + form_query_input(query, top_k_results)
+
+  # Generating response
+  response=client.models.generate_content(
+    model=model_name,
+    contents=input_text,
+  )
+
+  raw_text = response.text
+
+  # Clean the results
+  final_results = clean_response(raw_text)
+
+  cache_query(query, query_vector, final_results)
+  return final_results
 
 if __name__ == '__main__':
   query = "Bedsheets and mattresses"
