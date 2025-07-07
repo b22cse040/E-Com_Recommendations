@@ -1,10 +1,13 @@
 elasticsearch
 faiss-cpu
+flask
+flask-caching
 google-genai
 langchain
 numpy
 polars
 python-dotenv
+redis
 sentence-transformers
 streamlit
 tqdm

@@ -17,6 +17,14 @@ def form_query_input(query: str, top_k_results: list[dict]) -> str:
       input += f"{key}: {value}\n"
   return input
 
+def expand_query(query: str, client: genai.client) -> str:
+  query = query.lower().strip()
+  expanded_query = client.models.generate_content(
+    model=model_name,
+    contents=_CONTEXT_PROVIDER_PROMPT + query
+  )
+  return expanded_query.text.strip()
+
 ## Inputs the prompt and Input to return a JSON like response
 ## that handles ranking of items.
 def form_response(query: str, model_name: str):
@@ -25,12 +33,10 @@ def form_response(query: str, model_name: str):
   client = genai.Client()
 
   ## Adding more context to the query so as to obtain better embeddings
-  expanded_query = client.models.generate_content(
-    model=model_name,
-    contents=_CONTEXT_PROVIDER_PROMPT + query
-  )
+  expanded_query = expand_query(query, client)
+  print(expanded_query)
 
-  top_k_results = search_query(query, top_k=10)
+  top_k_results = search_query(expanded_query, top_k=10)
   input_text = _RANKER_PROMPT + form_query_input(query, top_k_results)
 
   response=client.models.generate_content(

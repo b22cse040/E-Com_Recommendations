@@ -1,34 +1,7 @@
-Query: Sunflower
-Main query response time: 4.8599 sec
-Similar query search time: 0.0224 sec
-Similar query response time: 5.2200 sec
-Similar queries thread time: 10.0814 sec
-Time to output results: 10.0821 sec
-----
-Query: Sunflower
-Main query response time: 4.9424 sec
-Similar query search time: 0.0393 sec
-Similar query response time: 5.8587 sec
-Similar queries thread time: 10.8020 sec
-Time to output results: 10.8025 sec
-----
-Query: Sunflower
-Main query response time: 5.1335 sec
-Similar query search time: 0.0241 sec
-Similar query response time: 5.9925 sec
-Time to output results: 11.1278 sec
-----
 Query: bedsheets and mattress for co-living
-Main query response time: 4.6606 sec
-Similar query search time: 0.0266 sec
-Similar query 'camper | Sheets And Sheet Sets' response time: 6.2425 sec
-Similar query 'floating bed | Beds' response time: 4.5457 sec
-Total similar queries time: 10.8148 sec
-----
-Query: bedsheets and mattress for co-living
-Main query response time: 5.5610 sec
-Similar query search time: 0.0252 sec
-Similar query 'camper | Sheets And Sheet Sets' response time: 6.2656 sec
-Similar query 'floating bed | Beds' response time: 5.0816 sec
-Total similar queries time: 11.3724 sec
+Main query response time: 5.3778 sec
+Similar query search time: 0.0587 sec
+Similar query 'camper | Sheets And Sheet Sets' response time: 5.6907 sec
+Similar query 'floating bed | Beds' response time: 5.4246 sec
+Total similar queries time: 11.1741 sec
 ----
