@@ -8,3 +8,5 @@ python-dotenv
 sentence-transformers
 streamlit
 tqdm
+logging
+sentence-transformers

@@ -1,21 +1,26 @@
-import os, time
+import os
+import time
 import numpy as np
 from dotenv import load_dotenv
 from sentence_transformers import SentenceTransformer
 from elasticsearch import Elasticsearch
 from concurrent.futures import ThreadPoolExecutor
+from src.utils.logger import logger
 
 load_dotenv()
 
+# --- Elasticsearch Connection ---
 ca_certs = os.getenv("ELASTICSEARCH_CA_CERTIFICATE")
 es = Elasticsearch(
-  "https://localhost:9200",
-  basic_auth=("elastic", os.getenv("ELASTICSEARCH_PASSWORD")),
-  ca_certs=ca_certs,
+    "https://localhost:9200",
+    basic_auth=("elastic", os.getenv("ELASTICSEARCH_PASSWORD")),
+    ca_certs=ca_certs,
 )
 
+# --- Embedding Model ---
 EMBEDDING_MODEL_NAME = "all-MiniLM-L6-v2"
 model = SentenceTransformer(EMBEDDING_MODEL_NAME)
+
 
 def search_elasticsearch_embedding(query: str, top_k: int = 5) -> list[dict]:
   """
@@ -29,13 +34,13 @@ def search_elasticsearch_embedding(query: str, top_k: int = 5) -> list[dict]:
   """
   query_embedding = model.encode(query)
   knn_query = {
-    "knn": {
-      "field": "embedding",
-      "query_vector": query_embedding.tolist(),
-      "k": top_k,
-      "num_candidates": max(10 * top_k, 100),
-    },
-    "_source": ["text"]
+      "knn": {
+          "field": "embedding",
+          "query_vector": query_embedding.tolist(),
+          "k": top_k,
+          "num_candidates": max(10 * top_k, 100),
+      },
+      "_source": ["text"]
   }
 
   response = es.search(index="corpus_chunks", body=knn_query)
@@ -43,11 +48,12 @@ def search_elasticsearch_embedding(query: str, top_k: int = 5) -> list[dict]:
   results = []
   for hit in response["hits"]["hits"]:
     results.append({
-      "content": hit["_source"]["text"],
-      "score": hit["_score"],
+        "content": hit["_source"]["text"],
+        "score": hit["_score"],
     })
 
   return results
+
 
 def search_es_keywords(query: str, top_k: int = 5) -> list[dict]:
   """
@@ -60,15 +66,15 @@ def search_es_keywords(query: str, top_k: int = 5) -> list[dict]:
     Most likely results for keyword search.
   """
   keyword_query = {
-    "query": {
-      "match": {
-        "text": {
-          "query": query,
-          "fuzziness": "AUTO",
-        }
-      }
-    },
-    "size": top_k
+      "query": {
+          "match": {
+              "text": {
+                  "query": query,
+                  "fuzziness": "AUTO",
+              }
+          }
+      },
+      "size": top_k
   }
 
   response = es.search(index="corpus_chunks", body=keyword_query)
@@ -76,45 +82,42 @@ def search_es_keywords(query: str, top_k: int = 5) -> list[dict]:
   results = []
   for hit in response["hits"]["hits"]:
     results.append({
-      "content": hit["_source"]["text"],
-      "score": hit["_score"],
+        "content": hit["_source"]["text"],
+        "score": hit["_score"],
     })
 
   return results
 
-## Average time for parallel: 0.0589 sec, check evals directory
-## Average time for sequentially: 0.1068 sec, check evals directory
-## Optimization: 44.85% optimization in time
+
 def search_query(query: str, top_k: int = 5) -> list[dict]:
   """
-  Find the most relevant keyword and semantic hits for thw query in parallel.
+  Find the most relevant keyword and semantic hits for the query in parallel.
   Args:
     query (str): The query to search for.
     top_k: Gives the top k results for the query.
 
   Returns:
-    A concatenated list of top k results of both searches, yielding a lisk of
+    A concatenated list of top k results of both searches, yielding a list of
     size 2k.
   """
-  # start_time = time.time()
-  # semantic_hits = search_elasticsearch_embedding(query, top_k)
-  # keywords_hits = search_es_keywords(query, top_k)
-  # top_hits = semantic_hits + keywords_hits
+  start_time = time.time()
+  logger.info(f"Starting parallel search for query: '{query[:50]}...'")
 
   with ThreadPoolExecutor(max_workers=2) as executor:
-    future_semantic = executor.submit(search_elasticsearch_embedding, query, top_k)
+    future_semantic = executor.submit(
+        search_elasticsearch_embedding, query, top_k)
     future_keywords = executor.submit(search_es_keywords, query, top_k)
 
     semantic_hits = future_semantic.result()
     keyword_hits = future_keywords.result()
 
   top_hits = semantic_hits + keyword_hits
-  # total_time = time.time() - start_time
-  # file_path = "../evals/search_query.txt"
-  #
-  # with open(file_path, "a") as f:
-  #   f.write(f"Got {len(top_hits)} hits in {total_time:.4f} seconds for the query: {query} [PARALLEL]\n")
+  total_time = time.time() - start_time
+  logger.info(
+      f"Parallel search completed. Got {len(top_hits)} total hits in {total_time:.4f} seconds.")
+
   return top_hits
+
 
 def search_similar_queries(query: str, top_k: int = 2) -> list[str]:
   """
@@ -125,69 +128,63 @@ def search_similar_queries(query: str, top_k: int = 2) -> list[str]:
     top_k (int): Number of similar queries to return
 
   Returns:
-    List of string with 'query_text'
+    List of strings with 'query_text'
   """
+  logger.info(f"Searching for {top_k} similar queries for: '{query}'")
+  start_time = time.time()
   query_embedding = model.encode(query)
 
   # Search for top_k similar queries
   knn_query = {
-    "query": {
-      "bool": {
-        "filter": [
-          {"term": {"type": "query"}}
-        ],
-        "must": {
-          "knn": {
-            "field": "embedding",
-            "query_vector": query_embedding.tolist(),
-            "k": top_k,
-            "num_candidates": 20
+      "query": {
+          "bool": {
+              "filter": [
+                  {"term": {"type": "query"}}
+              ],
+              "must": {
+                  "knn": {
+                      "field": "embedding",
+                      "query_vector": query_embedding.tolist(),
+                      "k": top_k,
+                      "num_candidates": 20
+                  }
+              }
           }
-        }
       }
-    }
   }
 
   response = es.search(
-    index="corpus_chunks",
-    body=knn_query,
+      index="corpus_chunks",
+      body=knn_query,
   )
 
-  results = []
-  for hit in response["hits"]["hits"]:
-    # results.append({
-    #   "content": hit["_source"]["text"],
-    #   "score": hit["_score"],
-    # })
-    text = hit["_source"]["text"]
-    score = hit["_score"]
-    # print(type(score))
-
-    if isinstance(score, (np.integer, np.floating)):
-      score = float(score)
-
-    # print(type(score))
-
-    results.append(text)
+  results = [hit["_source"]["text"] for hit in response["hits"]["hits"]]
+  logger.info(
+      f"Found {len(results)} similar queries in {time.time() - start_time:.4f}s.")
 
   return results
 
+
 if __name__ == "__main__":
   queries = [
-    "sunflowers",
-    "bedshits and mattersess",
-    "Headphones",
-    "wine bar",
-    "wall art"
+      "sunflowers",
+      "bedshits and mattersess",
+      "Headphones",
+      "wine bar",
+      "wall art"
   ]
-  #
-  # for query in queries:
-  #   hits = search_query(query, top_k=10)
-    # for hit in hits:
-    #   print(f"{hit['content']}\nScore: {hit['score']:.4f}\n{'='*50}")
+
+  # Example of searching for product chunks
   for query in queries:
-    print(query, ": \n")
+    hits = search_query(query, top_k=10)
+    print(f"\n--- Product Search Results for '{query}' ---")
+    # for hit in hits[:2]: # Show first 2 for brevity
+    #   print(f"{hit['content']}\nScore: {hit['score']:.4f}\n{'='*20}")
+
+  # Example of searching for similar queries
+  for query in queries:
+    print(f"\n--- Similar Queries for '{query}' ---")
     results = search_similar_queries(query)
     for result in results:
-      print(f"{result}\n")
+      print(f"-> {result}")
     print('=' * 65)
