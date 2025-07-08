@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Results - Interior Designer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script>
+        function showSimilar(simQuery) {
+            const responses = JSON.parse(document.getElementById("similarResponses").textContent);
+            let container = document.getElementById("similarResults");
+            container.innerHTML = "<h2>Results for: <b>" + simQuery + "</b></h2>";
+
+            let res = responses[simQuery];
+            if (!res || Object.keys(res).length === 0) {
+                container.innerHTML += "<p>No active products found for this query.</p>";
+            } else {
+                for (const key in res) {
+                    container.innerHTML += "<h3>" + res[key]["Name"] + "</h3>";
+                    container.innerHTML += "<p><b>Why?</b> " + res[key]["Explanation"] + "</p>";
+                }
+            }
+        }
+    </script>
+</head>
+<body>
+    <h1>Results for your query: <b>{{ user_query }}</b></h1>
+    {% if results %}
+        {% for key, val in results.items() %}
+            <h3>{{ val['Name'] }}</h3>
+            <p><b>Why?</b> {{ val['Explanation'] }}</p>
+        {% endfor %}
+    {% else %}
+        <p>No valid products found. Please try again.</p>
+    {% endif %}
+
+    <h2>Users also searched for:</h2>
+    {% for sim in similar_queries %}
+        <button onclick="showSimilar('{{ sim }}')">{{ sim }}</button>
+    {% endfor %}
+
+    <div id="similarResults"></div>
+
+    <pre id="similarResponses" style="display:none;">{{ similar_responses_json|safe }}</pre>
+</body>
+</html>

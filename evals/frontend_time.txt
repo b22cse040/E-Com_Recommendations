@@ -1,41 +1,45 @@
-Query: bedsheets and mattress for co-living
-Main query response time: 5.3778 sec
-Similar query search time: 0.0587 sec
-Similar query 'camper | Sheets And Sheet Sets' response time: 5.6907 sec
-Similar query 'floating bed | Beds' response time: 5.4246 sec
-Total similar queries time: 11.1741 sec
-----
-Query: S
-Main query response time: 6.4917 sec
-Similar query search time: 0.0354 sec
-Total similar queries time: 0.0354 sec
-----
 Query: Sunflower
-Main query response time: 6.0739 sec
-Similar query search time: 0.0874 sec
-Similar query 'sunflower | Wall Art' response time: 5.7591 sec
-Total similar queries time: 5.8465 sec
-----
-Query: Sunflower
-Main query response time: 0.0180 sec
-Similar query search time: 0.0205 sec
-Similar query 'sunflower | Wall Art' response time: 0.0114 sec
-Total similar queries time: 0.0319 sec
-----
-Query: Sunflower
-Main query response time: 0.0285 sec
-Similar query search time: 0.0667 sec
-Similar query 'sunflower | Wall Art' response time: 0.0607 sec
-Total similar queries time: 0.1273 sec
-----
-Query: Wall art and flowers
-Main query response time: 6.4250 sec
-Similar query search time: 0.0212 sec
-Similar query 'bedroom wall decor floral, multicolored with some teal (prints) | Wall Décor' response time: 6.3224 sec
-Total similar queries time: 6.3436 sec
-----
-Query: bedroom wall decor floral, multicolored with some teal
-Main query response time: 0.0225 sec
-Similar query search time: 0.0206 sec
-Total similar queries time: 0.0206 sec
-----
+Main query response time: 0.0415 sec
+Similar queries response time: 0.0599 sec
+Similar query (sunflower | Wall Art) response time: 0.0109 sec
+Total similar queries time: 0.0708 sec
+---
+Query: Wine art for wall
+Main query response time: 6.0670 sec
+Similar queries response time: 0.0746 sec
+Total similar queries time: 0.0746 sec
+---
+Query: Wall art
+Main query response time: 7.0411 sec
+Similar queries response time: 0.0743 sec
+Similar query (wall art fiji | Wall Art) response time: 5.3814 sec
+Similar query (picasso | Wall Art) response time: 5.9025 sec
+Total similar queries time: 11.3582 sec
+---
+Query: Wall art
+Main query response time: 0.0317 sec
+Similar queries response time: 0.0220 sec
+Similar query (wall art fiji | Wall Art) response time: 0.0124 sec
+Similar query (picasso | Wall Art) response time: 0.0107 sec
+Total similar queries time: 0.0451 sec
+---
+Query: picasso
+Main query response time: 6.9580 sec
+Similar queries response time: 0.0425 sec
+Similar query (picasso | Wall Art) response time: 0.0135 sec
+Total similar queries time: 0.0560 sec
+---
+Query: picasso | Wall art
+Main query response time: 0.0142 sec
+Similar queries response time: 0.0205 sec
+Similar query (picasso | Wall Art) response time: 0.0144 sec
+Similar query (mexican art | Wall Art) response time: 5.5734 sec
+Total similar queries time: 5.6082 sec
+---
+Query: picasso | Wall art
+Main query response time: 0.0306 sec
+Similar queries response time: 0.0201 sec
+Similar query (picasso | Wall Art) response time: 0.0299 sec
+Similar query (mexican art | Wall Art) response time: 7.1920 sec
+Total similar queries time: 7.2420 sec
+---
