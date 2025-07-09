@@ -3,6 +3,7 @@ import time
 from dotenv import load_dotenv
 from src.llms.llms import form_response
 from src.query_emb import search_similar_queries
+from src.speech import fetch_query_by_voice
 
 load_dotenv()
 

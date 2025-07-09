@@ -7,22 +7,23 @@ import speech_recognition as sr
 load_dotenv()
 wit_ai_key = os.getenv("WIT_AI_KEY")
 
-def listen_and_transcribe():
+def fetch_query_by_voice():
   r = sr.Recognizer()
-
   with sr.Microphone() as source:
-    print("Speak now...")
     audio = r.listen(source)
 
   try:
-    text = r.recognize_wit(audio, key=wit_ai_key)
-    print(f"You said: {text}")
+    query = r.recognize_wit(audio, key=wit_ai_key)
+    # print("You said: " + query)
 
   except sr.UnknownValueError:
-    print("Could not understand audio")
-
+    # print("Could not understand audio")
+    return ""
   except sr.RequestError:
-    print("API request error")
+    # print("API request error")
+    return ""
+  return query
 
 if __name__ == "__main__":
-  listen_and_transcribe()
+  query = fetch_query_by_voice()
+  print(query)
