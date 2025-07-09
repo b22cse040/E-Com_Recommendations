@@ -6,8 +6,10 @@ google-genai
 langchain
 numpy
 polars
+pyaudio
 python-dotenv
 redis
 sentence-transformers
+SpeechRecognition
 streamlit
 tqdm
