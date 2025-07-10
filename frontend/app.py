@@ -2,6 +2,7 @@ import os, json, threading
 from dotenv import load_dotenv
 from flask import Flask, render_template, request
 from frontend.logic import process_main_query, fetch_similar_queries, save_logs
+from src.speech import fetch_query_by_voice
 
 load_dotenv()
 model_name = os.getenv("MODEL_NAME")
@@ -11,9 +12,15 @@ app = Flask(__name__)
 @app.route("/", methods=["GET", "POST"])
 def index():
   if request.method == "POST":
-    user_query = request.form.get("query").strip()
+    use_voice = request.form.get("use_voice", "false").lower() == "true"
+
+    if use_voice:
+      user_query = fetch_query_by_voice()
+    else:
+      user_query = request.form.get("query", "").strip()
+
     if not user_query:
-      return render_template("error.html", message="Query cannot be empty.")
+      return render_template("error.html", message="Please enter a query.")
 
     try:
       results, main_logs = process_main_query(user_query, model_name)
@@ -45,6 +52,14 @@ def index():
       return render_template("error.html", message=str(e))
 
   return render_template("index.html")
+
+@app.route("/voice-capture", methods=["POST"])
+def voice_capture():
+  try:
+    query = fetch_query_by_voice()
+    return {"query" : query}
+  except Exception as e:
+    return {"query": f"Error: {str(e)}"}
 
 if __name__ == "__main__":
   app.run(debug=True)

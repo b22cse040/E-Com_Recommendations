@@ -43,3 +43,9 @@ Similar query (picasso | Wall Art) response time: 0.0299 sec
 Similar query (mexican art | Wall Art) response time: 7.1920 sec
 Total similar queries time: 7.2420 sec
 ---
+Query: Sunflowers
+Main query response time: 10.9522 sec
+Similar queries response time: 0.1109 sec
+Similar query (sunflower | Wall Art) response time: 6.9491 sec
+Total similar queries time: 7.0600 sec
+---
