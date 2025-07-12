@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Results - Interior Designer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script>
+        function handleAction(productName, action) {
+            if (action === 'AddToCart') {
+                fetch('/add-to-cart', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ product: productName })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    alert(data.message);
+                    console.log("Server response:", data);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert("Failed to add to cart.");
+                });
+            } else {
+                // For now, handle Like/Dislike with alert only
+                alert("Action: " + action + " on product: " + productName);
+                console.log("User performed: " + action + " on " + productName);
+            }
+        }
+
+        function showSimilar(simQuery) {
+            const responses = JSON.parse(document.getElementById("similarResponses").textContent);
+            let container = document.getElementById("similarResults");
+            container.innerHTML = "<h2>Results for: <b>" + simQuery + "</b></h2>";
+
+            let res = responses[simQuery];
+            if (!res || Object.keys(res).length === 0) {
+                container.innerHTML += "<p>No active products found for this query.</p>";
+            } else {
+                for (const key in res) {
+                    container.innerHTML += "<div style='border: 1px solid #ccc; padding: 10px; margin-bottom: 10px;'>";
+                    container.innerHTML += "<h3>" + res[key]["Name"] + "</h3>";
+                    container.innerHTML += "<p><b>Why?</b> " + res[key]["Explanation"] + "</p>";
+                    container.innerHTML += "</div>";
+                }
+            }
+        }
+    </script>
+</head>
+<body>
+    <h1>Results for your query: <b>{{ user_query }}</b></h1>
+    {% if results %}
+        {% for key, val in results.items() %}
+            <div style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px;">
+                <h3>{{ val['Name'] }}</h3>
+                <p><b>Why?</b> {{ val['Explanation'] }}</p>
+                <button onclick="handleAction('{{ val['Name'] }}', 'Like')">Like this product</button>
+                <button onclick="handleAction('{{ val['Name'] }}', 'Dislike')">Do Not Like this product</button>
+                <button onclick="handleAction('{{ val['Name'] }}', 'AddToCart')">Add to Cart</button>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>No valid products found. Please try again.</p>
+    {% endif %}
+
+    <h2>Users also searched for:</h2>
+    {% for sim in similar_queries %}
+        <button onclick="showSimilar('{{ sim }}')">{{ sim }}</button>
+    {% endfor %}
+
+    <div id="similarResults"></div>
+
+    <pre id="similarResponses" style="display:none;">{{ similar_responses_json|safe }}</pre>
+</body>
+</html>

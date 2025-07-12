@@ -49,3 +49,30 @@ Similar queries response time: 0.1109 sec
 Similar query (sunflower | Wall Art) response time: 6.9491 sec
 Total similar queries time: 7.0600 sec
 ---
+Query: Wall art
+Main query response time: 6.5309 sec
+Similar queries response time: 0.2664 sec
+Similar query (wall art fiji | Wall Art) response time: 5.6817 sec
+Similar query (picasso | Wall Art) response time: 6.5294 sec
+Total similar queries time: 12.4775 sec
+---
+Query: Wall art
+Main query response time: 0.1052 sec
+Similar queries response time: 0.1887 sec
+Similar query (wall art fiji | Wall Art) response time: 0.2204 sec
+Similar query (picasso | Wall Art) response time: 0.2107 sec
+Total similar queries time: 0.6197 sec
+---
+Query: picasso | Wall art
+Main query response time: 0.0570 sec
+Similar queries response time: 0.0693 sec
+Similar query (picasso | Wall Art) response time: 0.1741 sec
+Similar query (mexican art | Wall Art) response time: 5.9641 sec
+Total similar queries time: 6.2075 sec
+---
+Query: Sunflower
+Main query response time: 6.4606 sec
+Similar queries response time: 0.0806 sec
+Similar query (sunflower | Wall Art) response time: 5.4787 sec
+Total similar queries time: 5.5592 sec
+---

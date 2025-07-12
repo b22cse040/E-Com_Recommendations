@@ -3,6 +3,7 @@ faiss-cpu
 flask
 flask-caching
 google-genai
+ipykernel
 langchain
 numpy
 polars

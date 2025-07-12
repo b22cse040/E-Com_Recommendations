@@ -1,11 +1,16 @@
-import os, json, threading
+import os, json, threading, redis
 from dotenv import load_dotenv
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, jsonify
 from frontend.logic import process_main_query, fetch_similar_queries, save_logs
 from src.speech import fetch_query_by_voice
 
 load_dotenv()
 model_name = os.getenv("MODEL_NAME")
+
+redis_host = os.getenv("REDIS_HOST")
+redis_port = os.getenv("REDIS_PORT")
+redis_db = os.getenv("REDIS_DB")
+redis_client = redis.Redis(host=redis_host, port=6379, db=0)
 
 app = Flask(__name__)
 
@@ -42,7 +47,7 @@ def index():
       save_logs(user_query, full_logs)
 
       return render_template(
-        "result.html",
+        "result2.html",
         user_query=user_query,
         results=results,
         similar_queries=holder["similar_queries"],
@@ -60,6 +65,28 @@ def voice_capture():
     return {"query" : query}
   except Exception as e:
     return {"query": f"Error: {str(e)}"}
+
+@app.route("/add-to-cart", methods=["POST"])
+def add_to_cart():
+  data = request.get_json()
+  product_name = data["product"]
+
+  if not product_name:
+    return jsonify({
+      "status": "error",
+      "message": "No product name provided."
+    })
+
+  redis_client.rpush("cart", product_name)
+  return jsonify({
+    "status": "success",
+    "message": f"{product_name} added to cart."
+  })
+
+@app.route("/view-cart")
+def view_cart():
+  items = redis_client.lrange("cart", 0, -1)
+  return jsonify({"cart" : items})
 
 if __name__ == "__main__":
   app.run(debug=True)
