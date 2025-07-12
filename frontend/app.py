@@ -66,27 +66,63 @@ def voice_capture():
   except Exception as e:
     return {"query": f"Error: {str(e)}"}
 
-@app.route("/add-to-cart", methods=["POST"])
-def add_to_cart():
+@app.route("/product-action", methods=["POST"])
+def product_action():
   data = request.get_json()
   product_name = data["product"]
+  action = data["action"]
 
-  if not product_name:
+  if not product_name or not action:
     return jsonify({
-      "status": "error",
-      "message": "No product name provided."
+      "status" : "error",
+      "message" : "Missing product or action!"
     })
 
-  redis_client.rpush("cart", product_name)
-  return jsonify({
-    "status": "success",
-    "message": f"{product_name} added to cart."
-  })
+  if action == "AddToCart":
+    redis_client.rpush("cart", product_name)
+    return jsonify({
+      "status" : "success",
+      "message" : f"Product {product_name} added to cart!"
+    })
 
-@app.route("/view-cart")
-def view_cart():
-  items = redis_client.lrange("cart", 0, -1)
-  return jsonify({"cart" : items})
+  elif action == "RemoveFromCart":
+    redis_client.lrem("cart", 0, product_name)
+    return jsonify({
+      "status" : "success",
+      "message" : f"Product {product_name} removed from cart!"
+    })
+
+  elif action == "Like":
+    redis_client.rpush("liked", product_name)
+    return jsonify({
+      "status" : "success",
+      "message" : f"Product {product_name} liked!"
+    })
+
+  elif action == "Dislike":
+    redis_client.rpush("disliked", product_name)
+    return jsonify({
+      "status" : "success",
+      "message" : f"Product {product_name} disliked!"
+    })
+
+  else:
+    return jsonify({
+      "status" : "error",
+      "message" : "Invalid action!"
+    }), 400
+
+@app.route("/view-activity")
+def view_activity():
+  cart_items = redis_client.lrange("cart", 0, -1)
+  liked_items = redis_client.lrange("liked", 0, -1)
+  disliked_items = redis_client.lrange("disliked", 0, -1)
+
+  cart_items = [item.decode("utf-8") for item in cart_items]
+  liked_items = [item.decode("utf-8") for item in liked_items]
+  disliked_items = [item.decode("utf-8") for item in disliked_items]
+
+  return render_template("activity.html", cart=cart_items, liked=liked_items, dislikes=disliked_items)
 
 if __name__ == "__main__":
   app.run(debug=True)

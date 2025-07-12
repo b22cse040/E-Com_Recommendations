@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Your Activity</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h1>Your Activity Summary</h1>
+
+    <h2>🛒 Cart</h2>
+    {% if cart %}
+        <ul>
+            {% for item in cart %}
+                <li>{{ item }} <button onclick="removeAction('{{ item }}', 'RemoveFromCart')">Remove</button></li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No items in cart.</p>
+    {% endif %}
+
+    <h2>❤️ Liked Products</h2>
+    {% if liked %}
+        <ul>
+            {% for item in liked %}
+                <li>{{ item }} <button onclick="removeAction('{{ item }}', 'RemoveFromLiked')">Remove</button></li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No liked products.</p>
+    {% endif %}
+
+    <h2>👎 Disliked Products</h2>
+    {% if disliked %}
+        <ul>
+            {% for item in disliked %}
+                <li>{{ item }} <button onclick="removeAction('{{ item }}', 'RemoveFromDisliked')">Remove</button></li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No disliked products.</p>
+    {% endif %}
+
+    <script>
+        function removeAction(productName, action) {
+            fetch('/product-action', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ product: productName, action: action })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                location.reload();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert("Failed to remove item.");
+            });
+        }
+    </script>
+</body>
+</html>

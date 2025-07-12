@@ -76,3 +76,44 @@ Similar queries response time: 0.0806 sec
 Similar query (sunflower | Wall Art) response time: 5.4787 sec
 Total similar queries time: 5.5592 sec
 ---
+Query: Wall art
+Main query response time: 6.6777 sec
+Similar queries response time: 0.0581 sec
+Similar query (wall art fiji | Wall Art) response time: 5.1957 sec
+Similar query (picasso | Wall Art) response time: 6.4762 sec
+Total similar queries time: 11.7300 sec
+---
+Query: Wall art
+Main query response time: 0.0371 sec
+Similar queries response time: 0.0478 sec
+Similar query (wall art fiji | Wall Art) response time: 0.0131 sec
+Similar query (picasso | Wall Art) response time: 0.0091 sec
+Total similar queries time: 0.0699 sec
+---
+Query: Sunflowers
+Main query response time: 0.0654 sec
+Similar queries response time: 0.0641 sec
+Similar query (sunflower | Wall Art) response time: 0.0153 sec
+Total similar queries time: 0.0794 sec
+---
+Query: Wall art
+Main query response time: 0.0593 sec
+Similar queries response time: 0.0660 sec
+Similar query (wall art fiji | Wall Art) response time: 0.0123 sec
+Similar query (picasso | Wall Art) response time: 0.0104 sec
+Total similar queries time: 0.0887 sec
+---
+Query: Wall art
+Main query response time: 0.0290 sec
+Similar queries response time: 0.0466 sec
+Similar query (wall art fiji | Wall Art) response time: 0.0109 sec
+Similar query (picasso | Wall Art) response time: 0.0084 sec
+Total similar queries time: 0.0659 sec
+---
+Query: Wall art
+Main query response time: 0.0651 sec
+Similar queries response time: 0.0486 sec
+Similar query (wall art fiji | Wall Art) response time: 0.0119 sec
+Similar query (picasso | Wall Art) response time: 0.0088 sec
+Total similar queries time: 0.0693 sec
+---

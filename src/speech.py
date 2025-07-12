@@ -17,10 +17,10 @@ def fetch_query_by_voice():
     # print("You said: " + query)
 
   except sr.UnknownValueError:
-    # print("Could not understand audio")
+    print("Could not understand audio")
     return ""
   except sr.RequestError:
-    # print("API request error")
+    print("API request error")
     return ""
   return query
 

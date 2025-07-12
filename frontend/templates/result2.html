@@ -5,28 +5,21 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <script>
         function handleAction(productName, action) {
-            if (action === 'AddToCart') {
-                fetch('/add-to-cart', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ product: productName })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    alert(data.message);
-                    console.log("Server response:", data);
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert("Failed to add to cart.");
-                });
-            } else {
-                // For now, handle Like/Dislike with alert only
-                alert("Action: " + action + " on product: " + productName);
-                console.log("User performed: " + action + " on " + productName);
-            }
+            fetch('/product-action', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ product: productName, action: action })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert("Failed to record action.");
+            });
         }
 
         function showSimilar(simQuery) {
@@ -39,10 +32,16 @@
                 container.innerHTML += "<p>No active products found for this query.</p>";
             } else {
                 for (const key in res) {
-                    container.innerHTML += "<div style='border: 1px solid #ccc; padding: 10px; margin-bottom: 10px;'>";
-                    container.innerHTML += "<h3>" + res[key]["Name"] + "</h3>";
-                    container.innerHTML += "<p><b>Why?</b> " + res[key]["Explanation"] + "</p>";
-                    container.innerHTML += "</div>";
+                    container.innerHTML += `
+                        <div style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px;">
+                            <h3>${res[key]["Name"]}</h3>
+                            <p><b>Why?</b> ${res[key]["Explanation"]}</p>
+                            <button onclick="handleAction('${res[key]["Name"]}', 'Like')">Like this product</button>
+                            <button onclick="handleAction('${res[key]["Name"]}', 'Dislike')">Do Not Like this product</button>
+                            <button onclick="handleAction('${res[key]["Name"]}', 'AddToCart')">Add to Cart</button>
+                            <button onclick="handleAction('${res[key]["Name"]}', 'RemoveFromCart')">Remove from Cart</button>
+                        </div>
+                    `;
                 }
             }
         }
@@ -58,6 +57,7 @@
                 <button onclick="handleAction('{{ val['Name'] }}', 'Like')">Like this product</button>
                 <button onclick="handleAction('{{ val['Name'] }}', 'Dislike')">Do Not Like this product</button>
                 <button onclick="handleAction('{{ val['Name'] }}', 'AddToCart')">Add to Cart</button>
+                <button onclick="handleAction('{{ val['Name'] }}', 'RemoveFromCart')">Remove from Cart</button>
             </div>
         {% endfor %}
     {% else %}
@@ -72,5 +72,12 @@
     <div id="similarResults"></div>
 
     <pre id="similarResponses" style="display:none;">{{ similar_responses_json|safe }}</pre>
+
+    <br><br>
+    <a href="/view-activity">
+        <button style="padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer;">
+            View Your Actions
+        </button>
+    </a>
 </body>
 </html>
