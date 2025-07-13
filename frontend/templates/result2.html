@@ -1,83 +1,132 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-    <title>Results - Interior Designer</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <script>
-        function handleAction(productName, action) {
-            fetch('/product-action', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ product: productName, action: action })
-            })
-            .then(response => response.json())
-            .then(data => {
-                alert(data.message);
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert("Failed to record action.");
-            });
-        }
+	<title>Results - {{ user_query }}</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
 
-        function showSimilar(simQuery) {
-            const responses = JSON.parse(document.getElementById("similarResponses").textContent);
-            let container = document.getElementById("similarResults");
-            container.innerHTML = "<h2>Results for: <b>" + simQuery + "</b></h2>";
+<body>
+	<header class="header">
+		<a href="/">
+			<h1>E-Com Recommendations<span class="spark">.</span></h1>
+		</a>
+		<nav class="nav-links">
+			<a href="/view-activity">View Activity</a>
+		</nav>
+	</header>
 
-            let res = responses[simQuery];
-            if (!res || Object.keys(res).length === 0) {
-                container.innerHTML += "<p>No active products found for this query.</p>";
-            } else {
-                for (const key in res) {
-                    container.innerHTML += `
-                        <div style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px;">
-                            <h3>${res[key]["Name"]}</h3>
+	<div class="container">
+		<h1 class="page-title">Results for your query: <b>{{ user_query }}</b></h1>
+		{% if results %}
+		<div class="card-grid">
+			{% for key, val in results.items() %}
+			<div class="card">
+				<h3>{{ val['Name'] }}</h3>
+				<p><b>Why?</b> {{ val['Explanation'] }}</p>
+				<div class="action-buttons">
+					<button class="btn btn-action js-product-action" data-product-name="{{ val['Name'] }}"
+						data-action="Like"><i class="fas fa-thumbs-up"></i> Like</button>
+					<button class="btn btn-action js-product-action" data-product-name="{{ val['Name'] }}"
+						data-action="Dislike"><i class="fas fa-thumbs-down"></i> Dislike</button>
+					<button class="btn btn-action js-product-action" data-product-name="{{ val['Name'] }}"
+						data-action="AddToCart"><i class="fas fa-shopping-cart"></i> Add to Cart</button>
+				</div>
+			</div>
+			{% endfor %}
+		</div>
+		{% else %}
+		<p style="text-align: center;">No valid products found. Please try another search.</p>
+		{% endif %}
+
+		{% if similar_queries %}
+		<div class="similar-queries-section">
+			<h2>Users also searched for:</h2>
+			<div class="btn-group">
+				{% for sim in similar_queries %}
+				<button class="btn btn-tag js-show-similar" data-sim-query="{{ sim }}">{{ sim }}</button>
+				{% endfor %}
+			</div>
+		</div>
+		{% endif %}
+
+		<div id="similarResults" style="margin-top: 30px;"></div>
+	</div>
+
+	<pre id="similarResponses" style="display:none;">{{ similar_responses_json|safe }}</pre>
+
+	<script>
+		// --- Core Functions ---
+		function handleAction(productName, action) {
+			fetch('/product-action', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ product: productName, action: action })
+			})
+				.then(response => response.json())
+				.then(data => { alert(data.message); })
+				.catch(error => {
+					console.error('Error:', error);
+					alert("Failed to record action.");
+				});
+		}
+
+		function showSimilar(simQuery) {
+			const responses = JSON.parse(document.getElementById("similarResponses").textContent);
+			let container = document.getElementById("similarResults");
+			let resultsHTML = `<h2 class="page-title">Results for: <b>${simQuery}</b></h2>`;
+
+			let res = responses[simQuery];
+			if (!res || Object.keys(res).length === 0) {
+				resultsHTML += "<p style='text-align:center;'>No products found for this query.</p>";
+			} else {
+				let cardGrid = '<div class="card-grid">';
+				for (const key in res) {
+					const productName = res[key]["Name"];
+					// Escape double quotes for HTML attribute
+					const safeProductName = productName.replace(/"/g, '"');
+					cardGrid += `
+                        <div class="card">
+                            <h3>${productName}</h3>
                             <p><b>Why?</b> ${res[key]["Explanation"]}</p>
-                            <button onclick="handleAction('${res[key]["Name"]}', 'Like')">Like this product</button>
-                            <button onclick="handleAction('${res[key]["Name"]}', 'Dislike')">Do Not Like this product</button>
-                            <button onclick="handleAction('${res[key]["Name"]}', 'AddToCart')">Add to Cart</button>
-                            <button onclick="handleAction('${res[key]["Name"]}', 'RemoveFromCart')">Remove from Cart</button>
+                            <div class="action-buttons">
+                                <button class="btn btn-action js-product-action" data-product-name="${safeProductName}" data-action="Like"><i class="fas fa-thumbs-up"></i> Like</button>
+                                <button class="btn btn-action js-product-action" data-product-name="${safeProductName}" data-action="Dislike"><i class="fas fa-thumbs-down"></i> Dislike</button>
+                                <button class="btn btn-action js-product-action" data-product-name="${safeProductName}" data-action="AddToCart"><i class="fas fa-shopping-cart"></i> Add to Cart</button>
+                            </div>
                         </div>
                     `;
-                }
-            }
-        }
-    </script>
-</head>
-<body>
-    <h1>Results for your query: <b>{{ user_query }}</b></h1>
-    {% if results %}
-        {% for key, val in results.items() %}
-            <div style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px;">
-                <h3>{{ val['Name'] }}</h3>
-                <p><b>Why?</b> {{ val['Explanation'] }}</p>
-                <button onclick="handleAction('{{ val['Name'] }}', 'Like')">Like this product</button>
-                <button onclick="handleAction('{{ val['Name'] }}', 'Dislike')">Do Not Like this product</button>
-                <button onclick="handleAction('{{ val['Name'] }}', 'AddToCart')">Add to Cart</button>
-                <button onclick="handleAction('{{ val['Name'] }}', 'RemoveFromCart')">Remove from Cart</button>
-            </div>
-        {% endfor %}
-    {% else %}
-        <p>No valid products found. Please try again.</p>
-    {% endif %}
+				}
+				cardGrid += '</div>';
+				resultsHTML += cardGrid;
+			}
+			container.innerHTML = resultsHTML;
+			container.scrollIntoView({ behavior: 'smooth' });
+		}
 
-    <h2>Users also searched for:</h2>
-    {% for sim in similar_queries %}
-        <button onclick="showSimilar('{{ sim }}')">{{ sim }}</button>
-    {% endfor %}
+		// --- Event Delegation ---
+		// A single listener for the whole document to handle all button clicks efficiently.
+		document.addEventListener('click', function (event) {
+			const productActionButton = event.target.closest('.js-product-action');
+			if (productActionButton) {
+				event.preventDefault();
+				const productName = productActionButton.dataset.productName;
+				const action = productActionButton.dataset.action;
+				handleAction(productName, action);
+				return;
+			}
 
-    <div id="similarResults"></div>
-
-    <pre id="similarResponses" style="display:none;">{{ similar_responses_json|safe }}</pre>
-
-    <br><br>
-    <a href="/view-activity">
-        <button style="padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer;">
-            View Your Actions
-        </button>
-    </a>
+			const showSimilarButton = event.target.closest('.js-show-similar');
+			if (showSimilarButton) {
+				event.preventDefault();
+				const simQuery = showSimilarButton.dataset.simQuery;
+				showSimilar(simQuery);
+				return;
+			}
+		});
+	</script>
 </body>
+
 </html>

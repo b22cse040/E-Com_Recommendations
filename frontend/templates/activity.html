@@ -1,64 +1,98 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-    <title>Your Activity</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+	<title>Your Activity</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 </head>
+
 <body>
-    <h1>Your Activity Summary</h1>
+	<header class="header">
+		<a href="/">
+			<h1>E-Com Recommendations<span class="spark">.</span></h1>
+		</a>
+		<nav class="nav-links">
+			<a href="/view-activity">View Activity</a>
+		</nav>
+	</header>
 
-    <h2>🛒 Cart</h2>
-    {% if cart %}
-        <ul>
-            {% for item in cart %}
-                <li>{{ item }} <button onclick="removeAction('{{ item }}', 'RemoveFromCart')">Remove</button></li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p>No items in cart.</p>
-    {% endif %}
+	<div class="container">
+		<h1 class="page-title">Your Activity Summary</h1>
 
-    <h2>❤️ Liked Products</h2>
-    {% if liked %}
-        <ul>
-            {% for item in liked %}
-                <li>{{ item }} <button onclick="removeAction('{{ item }}', 'RemoveFromLiked')">Remove</button></li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p>No liked products.</p>
-    {% endif %}
+		<div class="activity-section">
+			<h2><i class="fas fa-shopping-cart"></i> Your Cart</h2>
+			{% if cart %}
+			<ul class="activity-list">
+				{% for item in cart %}
+				<li>{{ item }} <button class="btn btn-danger js-remove-action" data-product-name="{{ item }}"
+						data-action="RemoveFromCart"><i class="fas fa-times"></i> Remove</button></li>
+				{% endfor %}
+			</ul>
+			{% else %}
+			<p>No items in your cart.</p>
+			{% endif %}
+		</div>
 
-    <h2>👎 Disliked Products</h2>
-    {% if disliked %}
-        <ul>
-            {% for item in disliked %}
-                <li>{{ item }} <button onclick="removeAction('{{ item }}', 'RemoveFromDisliked')">Remove</button></li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p>No disliked products.</p>
-    {% endif %}
+		<div class="activity-section">
+			<h2><i class="fas fa-heart"></i> Liked Products</h2>
+			{% if liked %}
+			<ul class="activity-list">
+				{% for item in liked %}
+				<li>{{ item }} <button class="btn btn-danger js-remove-action" data-product-name="{{ item }}"
+						data-action="RemoveFromLiked"><i class="fas fa-times"></i> Remove</button></li>
+				{% endfor %}
+			</ul>
+			{% else %}
+			<p>You haven't liked any products yet.</p>
+			{% endif %}
+		</div>
 
-    <script>
-        function removeAction(productName, action) {
-            fetch('/product-action', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ product: productName, action: action })
-            })
-            .then(response => response.json())
-            .then(data => {
-                alert(data.message);
-                location.reload();
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert("Failed to remove item.");
-            });
-        }
-    </script>
+		<div class="activity-section">
+			<h2><i class="fas fa-thumbs-down"></i> Disliked Products</h2>
+			{% if dislikes %}
+			<ul class="activity-list">
+				{% for item in dislikes %}
+				<li>{{ item }} <button class="btn btn-danger js-remove-action" data-product-name="{{ item }}"
+						data-action="RemoveFromDisliked"><i class="fas fa-times"></i> Remove</button></li>
+				{% endfor %}
+			</ul>
+			{% else %}
+			<p>No disliked products.</p>
+			{% endif %}
+		</div>
+	</div>
+
+	<script>
+		function removeAction(productName, action) {
+			fetch('/product-action', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ product: productName, action: action })
+			})
+				.then(response => response.json())
+				.then(data => {
+					alert(data.message);
+					location.reload();
+				})
+				.catch(error => {
+					console.error('Error:', error);
+					alert("Failed to remove item.");
+				});
+		}
+
+		// Event listener for all remove buttons
+		document.addEventListener('click', function (event) {
+			const removeButton = event.target.closest('.js-remove-action');
+			if (removeButton) {
+				event.preventDefault();
+				const productName = removeButton.dataset.productName;
+				const action = removeButton.dataset.action;
+				removeAction(productName, action);
+			}
+		});
+	</script>
 </body>
+
 </html>
