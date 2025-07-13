@@ -117,3 +117,54 @@ Similar query (wall art fiji | Wall Art) response time: 0.0119 sec
 Similar query (picasso | Wall Art) response time: 0.0088 sec
 Total similar queries time: 0.0693 sec
 ---
+Query: Sunflower
+Main query response time: 5.4127 sec
+Similar queries response time: 0.0405 sec
+Similar query (sunflower | Wall Art) response time: 5.8705 sec
+Total similar queries time: 5.9110 sec
+---
+Query: picasso | Wall art
+Main query response time: 5.6409 sec
+Similar queries response time: 0.0415 sec
+Similar query (picasso | Wall Art) response time: 0.0184 sec
+Similar query (mexican art | Wall Art) response time: 6.8691 sec
+Total similar queries time: 6.9291 sec
+---
+Query: picasso | Wall art
+Main query response time: 6.8109 sec
+Similar queries response time: 0.0193 sec
+Similar query (picasso | Wall Art) response time: 0.0108 sec
+Similar query (mexican art | Wall Art) response time: 6.7222 sec
+Total similar queries time: 6.7523 sec
+---
+Query: picasso | Wall art
+Main query response time: 0.3640 sec
+Similar queries response time: 0.0477 sec
+Similar query (picasso | Wall Art) response time: 0.0319 sec
+Similar query (mexican art | Wall Art) response time: 0.0283 sec
+Total similar queries time: 0.1080 sec
+---
+Query: Wall art
+Main query response time: 7.8321 sec
+Similar queries response time: 0.0483 sec
+Similar query (wall art fiji | Wall Art) response time: 5.3358 sec
+Similar query (picasso | Wall Art) response time: 0.0112 sec
+Total similar queries time: 5.3953 sec
+---
+Query: Call fart
+Main query response time: 5.9257 sec
+Similar queries response time: 0.1249 sec
+Total similar queries time: 0.1249 sec
+---
+Query: Sunfollowers
+Main query response time: 5.5786 sec
+Similar queries response time: 0.1352 sec
+Total similar queries time: 0.1352 sec
+---
+Query: Wall art
+Main query response time: 0.0988 sec
+Similar queries response time: 0.0942 sec
+Similar query (wall art fiji | Wall Art) response time: 0.0888 sec
+Similar query (picasso | Wall Art) response time: 0.0785 sec
+Total similar queries time: 0.2615 sec
+---
