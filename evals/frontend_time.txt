@@ -1,40 +1,3 @@
-Query: Sunflower
-Main query response time: 0.0415 sec
-Similar queries response time: 0.0599 sec
-Similar query (sunflower | Wall Art) response time: 0.0109 sec
-Total similar queries time: 0.0708 sec
----
-Query: Wine art for wall
-Main query response time: 6.0670 sec
-Similar queries response time: 0.0746 sec
-Total similar queries time: 0.0746 sec
----
-Query: Wall art
-Main query response time: 7.0411 sec
-Similar queries response time: 0.0743 sec
-Similar query (wall art fiji | Wall Art) response time: 5.3814 sec
-Similar query (picasso | Wall Art) response time: 5.9025 sec
-Total similar queries time: 11.3582 sec
----
-Query: Wall art
-Main query response time: 0.0317 sec
-Similar queries response time: 0.0220 sec
-Similar query (wall art fiji | Wall Art) response time: 0.0124 sec
-Similar query (picasso | Wall Art) response time: 0.0107 sec
-Total similar queries time: 0.0451 sec
----
-Query: picasso
-Main query response time: 6.9580 sec
-Similar queries response time: 0.0425 sec
-Similar query (picasso | Wall Art) response time: 0.0135 sec
-Total similar queries time: 0.0560 sec
----
-Query: picasso | Wall art
-Main query response time: 0.0142 sec
-Similar queries response time: 0.0205 sec
-Similar query (picasso | Wall Art) response time: 0.0144 sec
-Similar query (mexican art | Wall Art) response time: 5.5734 sec
-Total similar queries time: 5.6082 sec
 ---
 Query: picasso | Wall art
 Main query response time: 0.0306 sec
@@ -70,32 +33,6 @@ Similar query (picasso | Wall Art) response time: 0.1741 sec
 Similar query (mexican art | Wall Art) response time: 5.9641 sec
 Total similar queries time: 6.2075 sec
 ---
-Query: Sunflower
-Main query response time: 6.4606 sec
-Similar queries response time: 0.0806 sec
-Similar query (sunflower | Wall Art) response time: 5.4787 sec
-Total similar queries time: 5.5592 sec
----
-Query: Wall art
-Main query response time: 6.6777 sec
-Similar queries response time: 0.0581 sec
-Similar query (wall art fiji | Wall Art) response time: 5.1957 sec
-Similar query (picasso | Wall Art) response time: 6.4762 sec
-Total similar queries time: 11.7300 sec
----
-Query: Wall art
-Main query response time: 0.0371 sec
-Similar queries response time: 0.0478 sec
-Similar query (wall art fiji | Wall Art) response time: 0.0131 sec
-Similar query (picasso | Wall Art) response time: 0.0091 sec
-Total similar queries time: 0.0699 sec
----
-Query: Sunflowers
-Main query response time: 0.0654 sec
-Similar queries response time: 0.0641 sec
-Similar query (sunflower | Wall Art) response time: 0.0153 sec
-Total similar queries time: 0.0794 sec
----
 Query: Wall art
 Main query response time: 0.0593 sec
 Similar queries response time: 0.0660 sec
@@ -116,33 +53,6 @@ Similar queries response time: 0.0486 sec
 Similar query (wall art fiji | Wall Art) response time: 0.0119 sec
 Similar query (picasso | Wall Art) response time: 0.0088 sec
 Total similar queries time: 0.0693 sec
----
-Query: Sunflower
-Main query response time: 5.4127 sec
-Similar queries response time: 0.0405 sec
-Similar query (sunflower | Wall Art) response time: 5.8705 sec
-Total similar queries time: 5.9110 sec
----
-Query: picasso | Wall art
-Main query response time: 5.6409 sec
-Similar queries response time: 0.0415 sec
-Similar query (picasso | Wall Art) response time: 0.0184 sec
-Similar query (mexican art | Wall Art) response time: 6.8691 sec
-Total similar queries time: 6.9291 sec
----
-Query: picasso | Wall art
-Main query response time: 6.8109 sec
-Similar queries response time: 0.0193 sec
-Similar query (picasso | Wall Art) response time: 0.0108 sec
-Similar query (mexican art | Wall Art) response time: 6.7222 sec
-Total similar queries time: 6.7523 sec
----
-Query: picasso | Wall art
-Main query response time: 0.3640 sec
-Similar queries response time: 0.0477 sec
-Similar query (picasso | Wall Art) response time: 0.0319 sec
-Similar query (mexican art | Wall Art) response time: 0.0283 sec
-Total similar queries time: 0.1080 sec
 ---
 Query: Wall art
 Main query response time: 7.8321 sec
@@ -167,4 +77,25 @@ Similar queries response time: 0.0942 sec
 Similar query (wall art fiji | Wall Art) response time: 0.0888 sec
 Similar query (picasso | Wall Art) response time: 0.0785 sec
 Total similar queries time: 0.2615 sec
+---
+Query: Wall Art
+Main query response time: 0.1240 sec
+Similar queries response time: 0.1204 sec
+Similar query (wall art fiji | Wall Art) response time: 0.1768 sec
+Similar query (picasso | Wall Art) response time: 0.0898 sec
+Total similar queries time: 0.3870 sec
+---
+Query: Sofas \
+Main query response time: 7.2818 sec
+Similar queries response time: 0.1617 sec
+Similar query (sofa with ottoman | Sectionals) response time: 6.6650 sec
+Similar query (one alium way | Sofas) response time: 6.1508 sec
+Total similar queries time: 12.9774 sec
+---
+Query: Bedshits
+Main query response time: 5.9939 sec
+Similar queries response time: 0.1333 sec
+Similar query (navy and peach bedding | Bedding Sets) response time: 7.2509 sec
+Similar query (floating bed | Beds) response time: 6.1190 sec
+Total similar queries time: 13.5032 sec
 ---
