@@ -1,26 +1,12 @@
-<!DOCTYPE html>
-<html>
+{% extends "layout.html" %}
 
-<head>
-	<title>Error</title>
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-</head>
+{% block title %}Error{% endblock %}
 
-<body>
-	<header class="header">
-		<a href="/">
-			<h1>E-Com Recommendations<span class="spark">.</span></h1>
-		</a>
-	</header>
-
-	<div class="container" style="text-align: center;">
-		<h1 class="page-title" style="color: #d9534f;">An Error Occurred</h1>
-		<p style="font-size: 1.2rem;">{{ message }}</p>
-		<br>
-		<a href="{{ url_for('index') }}" class="btn btn-primary"><i class="fas fa-home"></i> Go Back Home</a>
-	</div>
-</body>
-
-</html>
+{% block content %}
+<div style="text-align: center; padding: 60px 20px;">
+	<h1 class="page-title" style="color: #d9534f;">An Error Occurred</h1>
+	<p style="font-size: 1.2rem; color: var(--text-light);">{{ message }}</p>
+	<br><br>
+	<a href="{{ url_for('index') }}" class="btn btn-primary"><i class="fas fa-home"></i> Go Back Home</a>
+</div>
+{% endblock %}

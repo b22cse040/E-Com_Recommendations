@@ -1,57 +1,42 @@
-<!DOCTYPE html>
-<html>
+{% extends "layout.html" %}
 
-<head>
-	<title>E-Com Product Search</title>
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-	<script>
-		function startVoiceCapture() {
-			document.getElementById("status").innerText = "Listening...";
-			fetch("/voice-capture", { method: "POST" })
-				.then(response => response.json())
-				.then(data => {
-					if (data.query && !data.query.startsWith("Error:")) {
-						document.getElementById("status").innerText = "Captured: " + data.query;
-						document.getElementById("query").value = data.query;
-					} else {
-						document.getElementById("status").innerText = data.query || "Could not capture voice. Please try again.";
-					}
-				})
-				.catch(error => {
-					document.getElementById("status").innerText = "Error capturing voice!";
-					console.error(error);
-				});
-		}
-	</script>
-</head>
+{% block title %}Product Search{% endblock %}
 
-<body>
-	<header class="header">
-		<a href="/">
-			<h1>E-Com Recommendations<span class="spark">.</span></h1>
-		</a>
-		<nav class="nav-links">
-			<a href="/view-activity">View Activity</a>
-		</nav>
-	</header>
-
-	<div class="container">
-		<div class="search-container">
-			<h1 class="page-title">Interior Design Product Search 🛋️</h1>
-			<form method="POST">
-				<input type="text" id="query" name="query" placeholder="Search for furniture, decor, and more..."
-					required>
-				<div class="btn-group">
-					<button type="submit" class="btn btn-primary"><i class="fas fa-search"></i> Search</button>
-					<button type="button" class="btn btn-secondary" onclick="startVoiceCapture()"><i
-							class="fas fa-microphone-alt"></i> Use Voice</button>
-				</div>
-			</form>
-			<p id="status"></p>
+{% block content %}
+<div class="search-wrapper">
+	<p class="super-title">E-Com Recommendations.</p>
+	<h1>Interior Design Product Search 🛋️</h1>
+	<form method="POST">
+		<div class="search-bar-wrapper">
+			<input type="text" id="query" name="query"
+				placeholder="Search for '70s inspired wall art' or 'modern coffee table'..." required>
+			<button type="submit" class="btn btn-primary"><i class="fas fa-search"></i> Search</button>
+			<button type="button" class="btn btn-secondary" onclick="startVoiceCapture()"><i
+					class="fas fa-microphone-alt"></i></button>
 		</div>
-	</div>
-</body>
+	</form>
+	<p id="status"></p>
+</div>
+{% endblock %}
 
-</html>
+{% block scripts %}
+<script>
+	function startVoiceCapture() {
+		document.getElementById("status").innerText = "Listening...";
+		fetch("/voice-capture", { method: "POST" })
+			.then(response => response.json())
+			.then(data => {
+				if (data.query && !data.query.startsWith("Error:")) {
+					document.getElementById("status").innerText = "Captured: " + data.query;
+					document.getElementById("query").value = data.query;
+				} else {
+					document.getElementById("status").innerText = data.query || "Could not capture voice. Please try again.";
+				}
+			})
+			.catch(error => {
+				document.getElementById("status").innerText = "Error capturing voice!";
+				console.error(error);
+			});
+	}
+</script>
+{% endblock %}

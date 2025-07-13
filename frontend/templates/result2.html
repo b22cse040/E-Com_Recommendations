@@ -1,65 +1,55 @@
-<!DOCTYPE html>
-<html>
+{% extends "layout.html" %}
 
-<head>
-	<title>Results - {{ user_query }}</title>
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-</head>
+{% block title %}Results for {{ user_query }}{% endblock %}
 
-<body>
-	<header class="header">
-		<a href="/">
-			<h1>E-Com Recommendations<span class="spark">.</span></h1>
-		</a>
-		<nav class="nav-links">
-			<a href="/view-activity">View Activity</a>
-		</nav>
-	</header>
-
-	<div class="container">
-		<h1 class="page-title">Results for your query: <b>{{ user_query }}</b></h1>
-		{% if results %}
-		<div class="card-grid">
-			{% for key, val in results.items() %}
-			<div class="card">
-				<h3>{{ val['Name'] }}</h3>
-				<p><b>Why?</b> {{ val['Explanation'] }}</p>
-				<div class="action-buttons">
-					<button class="btn btn-action js-product-action" data-product-name="{{ val['Name'] }}"
-						data-action="Like"><i class="fas fa-thumbs-up"></i> Like</button>
-					<button class="btn btn-action js-product-action" data-product-name="{{ val['Name'] }}"
-						data-action="Dislike"><i class="fas fa-thumbs-down"></i> Dislike</button>
-					<button class="btn btn-action js-product-action" data-product-name="{{ val['Name'] }}"
-						data-action="AddToCart"><i class="fas fa-shopping-cart"></i> Add to Cart</button>
-				</div>
-			</div>
-			{% endfor %}
+{% block content %}
+<h1 class="page-title">Results for: <b>{{ user_query }}</b></h1>
+{% if results %}
+<div class="card-grid">
+	{% for key, val in results.items() %}
+	<div class="card-base">
+		<h3>{{ val['Name'] }}</h3>
+		<p><b>Why?</b> {{ val['Explanation'] }}</p>
+		<div class="action-buttons">
+			<button class="btn btn-action js-product-action" data-product-name="{{ val['Name'] }}" data-action="Like"><i
+					class="fas fa-thumbs-up"></i> Like</button>
+			<button class="btn btn-action js-product-action" data-product-name="{{ val['Name'] }}"
+				data-action="Dislike"><i class="fas fa-thumbs-down"></i> Dislike</button>
+			<button class="btn btn-action js-product-action" data-product-name="{{ val['Name'] }}"
+				data-action="AddToCart"><i class="fas fa-shopping-cart"></i> Cart</button>
 		</div>
-		{% else %}
-		<p style="text-align: center;">No valid products found. Please try another search.</p>
-		{% endif %}
-
-		{% if similar_queries %}
-		<div class="similar-queries-section">
-			<h2>Users also searched for:</h2>
-			<div class="btn-group">
-				{% for sim in similar_queries %}
-				<button class="btn btn-tag js-show-similar" data-sim-query="{{ sim }}">{{ sim }}</button>
-				{% endfor %}
-			</div>
-		</div>
-		{% endif %}
-
-		<div id="similarResults" style="margin-top: 30px;"></div>
 	</div>
+	{% endfor %}
+</div>
+{% else %}
+<p style="text-align: center;">No valid products found. Please try another search.</p>
+{% endif %}
 
-	<pre id="similarResponses" style="display:none;">{{ similar_responses_json|safe }}</pre>
+{% if similar_queries %}
+<div class="similar-queries-section">
+	<h2 class="page-title" style="font-size: 1.5rem; margin-bottom: 1.5rem;">Users also searched for:</h2>
+	<div class="btn-group">
+		{% for sim in similar_queries %}
+		<button class="btn btn-tag js-show-similar" data-sim-query="{{ sim }}">{{ sim }}</button>
+		{% endfor %}
+	</div>
+</div>
+{% endif %}
 
-	<script>
-		// --- Core Functions ---
-		function handleAction(productName, action) {
+<div id="similarResults" style="margin-top: 40px;"></div>
+
+<pre id="similarResponses" style="display:none;">{{ similar_responses_json|safe }}</pre>
+{% endblock %}
+
+{% block scripts %}
+<script>
+	document.addEventListener('click', function (event) {
+		const productActionButton = event.target.closest('.js-product-action');
+		if (productActionButton) {
+			event.preventDefault();
+			const productName = productActionButton.dataset.productName;
+			const action = productActionButton.dataset.action;
+
 			fetch('/product-action', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
@@ -67,17 +57,18 @@
 			})
 				.then(response => response.json())
 				.then(data => { alert(data.message); })
-				.catch(error => {
-					console.error('Error:', error);
-					alert("Failed to record action.");
-				});
+				.catch(error => { console.error('Error:', error); alert("Failed to record action."); });
+			return;
 		}
 
-		function showSimilar(simQuery) {
+		const showSimilarButton = event.target.closest('.js-show-similar');
+		if (showSimilarButton) {
+			event.preventDefault();
+			const simQuery = showSimilarButton.dataset.simQuery;
+
 			const responses = JSON.parse(document.getElementById("similarResponses").textContent);
 			let container = document.getElementById("similarResults");
 			let resultsHTML = `<h2 class="page-title">Results for: <b>${simQuery}</b></h2>`;
-
 			let res = responses[simQuery];
 			if (!res || Object.keys(res).length === 0) {
 				resultsHTML += "<p style='text-align:center;'>No products found for this query.</p>";
@@ -85,16 +76,16 @@
 				let cardGrid = '<div class="card-grid">';
 				for (const key in res) {
 					const productName = res[key]["Name"];
-					// Escape double quotes for HTML attribute
+					// THIS LINE IS THE FIX: Escapes double quotes for safe use in the HTML attribute.
 					const safeProductName = productName.replace(/"/g, '"');
 					cardGrid += `
-                        <div class="card">
+                        <div class="card-base">
                             <h3>${productName}</h3>
                             <p><b>Why?</b> ${res[key]["Explanation"]}</p>
                             <div class="action-buttons">
                                 <button class="btn btn-action js-product-action" data-product-name="${safeProductName}" data-action="Like"><i class="fas fa-thumbs-up"></i> Like</button>
                                 <button class="btn btn-action js-product-action" data-product-name="${safeProductName}" data-action="Dislike"><i class="fas fa-thumbs-down"></i> Dislike</button>
-                                <button class="btn btn-action js-product-action" data-product-name="${safeProductName}" data-action="AddToCart"><i class="fas fa-shopping-cart"></i> Add to Cart</button>
+                                <button class="btn btn-action js-product-action" data-product-name="${safeProductName}" data-action="AddToCart"><i class="fas fa-shopping-cart"></i> Cart</button>
                             </div>
                         </div>
                     `;
@@ -103,30 +94,9 @@
 				resultsHTML += cardGrid;
 			}
 			container.innerHTML = resultsHTML;
-			container.scrollIntoView({ behavior: 'smooth' });
+			container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+			return;
 		}
-
-		// --- Event Delegation ---
-		// A single listener for the whole document to handle all button clicks efficiently.
-		document.addEventListener('click', function (event) {
-			const productActionButton = event.target.closest('.js-product-action');
-			if (productActionButton) {
-				event.preventDefault();
-				const productName = productActionButton.dataset.productName;
-				const action = productActionButton.dataset.action;
-				handleAction(productName, action);
-				return;
-			}
-
-			const showSimilarButton = event.target.closest('.js-show-similar');
-			if (showSimilarButton) {
-				event.preventDefault();
-				const simQuery = showSimilarButton.dataset.simQuery;
-				showSimilar(simQuery);
-				return;
-			}
-		});
-	</script>
-</body>
-
-</html>
+	});
+</script>
+{% endblock %}
