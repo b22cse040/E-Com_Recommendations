@@ -99,3 +99,10 @@ Similar query (navy and peach bedding | Bedding Sets) response time: 7.2509 sec
 Similar query (floating bed | Beds) response time: 6.1190 sec
 Total similar queries time: 13.5032 sec
 ---
+Query: Wooden Chairs
+Main query response time: 6.2730 sec
+Similar queries response time: 0.1960 sec
+Similar query (leather dining chairs | Dining Chairs) response time: 6.1108 sec
+Similar query (kids chair | Kids Chairs) response time: 6.5340 sec
+Total similar queries time: 12.8408 sec
+---
