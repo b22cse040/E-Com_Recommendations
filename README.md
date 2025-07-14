@@ -11,3 +11,6 @@ Finally, for the user, we have made a minimalist UI to prevent any confusion for
 
 ## User Story
 ![image](https://github.com/user-attachments/assets/8a6f1b9f-d7bd-4051-b107-965cf924944e)
+
+## UI
+Screenshots of the UI have been kept in the screenshots directory

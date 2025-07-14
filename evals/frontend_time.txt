@@ -106,3 +106,17 @@ Similar query (leather dining chairs | Dining Chairs) response time: 6.1108 sec
 Similar query (kids chair | Kids Chairs) response time: 6.5340 sec
 Total similar queries time: 12.8408 sec
 ---
+Query: Wall art
+Main query response time: 6.2013 sec
+Similar queries response time: 0.1368 sec
+Similar query (wall art fiji | Wall Art) response time: 5.9208 sec
+Similar query (picasso | Wall Art) response time: 6.2629 sec
+Total similar queries time: 12.3205 sec
+---
+Query: Wall art
+Main query response time: 0.1122 sec
+Similar queries response time: 0.1371 sec
+Similar query (wall art fiji | Wall Art) response time: 0.1450 sec
+Similar query (picasso | Wall Art) response time: 0.0887 sec
+Total similar queries time: 0.3708 sec
+---
