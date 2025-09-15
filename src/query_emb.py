@@ -5,7 +5,14 @@ from sentence_transformers import SentenceTransformer
 from elasticsearch import Elasticsearch
 from concurrent.futures import ThreadPoolExecutor
 from saved_crossencoder.FT_Ranker import CrossEncoder, load_ranker_model
-from vectorDB import embed_text
+from src.vector_DB import embed_text
+
+ca_certs = os.getenv("ELASTICSEARCH_CA_CERTIFICATE")
+es = Elasticsearch(
+  "https://localhost:9200",
+  basic_auth=("elastic", os.getenv("ELASTICSEARCH_PASSWORD")),
+  ca_certs=ca_certs,
+)
 
 def search_elasticsearch_embedding(query: str, model, model_tokenizer, device: str, top_k: int = 5) -> list[dict]:
   """
@@ -185,13 +192,6 @@ def search_query(query: str, model, model_tokenizer, device, top_k: int = 5) -> 
 if __name__ == "__main__":
 
   load_dotenv()
-
-  ca_certs = os.getenv("ELASTICSEARCH_CA_CERTIFICATE")
-  es = Elasticsearch(
-    "https://localhost:9200",
-    basic_auth=("elastic", os.getenv("ELASTICSEARCH_PASSWORD")),
-    ca_certs=ca_certs,
-  )
 
   # EMBEDDING_MODEL_NAME = "all-MiniLM-L6-v2"
   # model = SentenceTransformer(EMBEDDING_MODEL_NAME)

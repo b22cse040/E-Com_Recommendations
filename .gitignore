@@ -2,6 +2,7 @@
 cmd.txt
 
 Corpus/
+src/llms/.env
 
 saved_crossencoder/added_tokens.json
 saved_crossencoder/config.json
