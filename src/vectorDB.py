@@ -15,7 +15,7 @@ from saved_crossencoder.FT_Ranker import CrossEncoder, load_ranker_model
 # Embedding fn using CE Model
 # ======================================================
 def embed_text(text, model, tokenizer, device):
-  inputs = tokenizer(text, return_tensors="pt", truncation=True, padding=True).to(device)
+  inputs = tokenizer(text, return_tensors="pt", truncation=True, max_length=128, padding="max_length").to(device)
   with torch.no_grad():
     outputs = model.encoder(**inputs)
     pooled_output = outputs.last_hidden_state[:, 0, :] # [CLS] Token
@@ -67,12 +67,12 @@ def process_and_index_dataset(
     query_text = str(row["query"]).strip()
     product_text = str(row["product_input"]).strip()
 
-    ## --- Handle Queries ---
-    if query_text and query_text not in seen_queries:
-      query_embedding = embed_text(query_text, model, tokenizer, device)
-      index_entry(es_client, index_name, query_text, query_embedding, chunk_type="query", source=source)
-      seen_queries.add(query_text)
-    else: continue
+    # ## --- Handle Queries ---
+    # if query_text and query_text not in seen_queries:
+    #   query_embedding = embed_text(query_text, model, tokenizer, device)
+    #   index_entry(es_client, index_name, query_text, query_embedding, chunk_type="query", source=source)
+    #   seen_queries.add(query_text)
+    # else: continue
 
     ## --- Handle Product information ---
     if product_text and product_text not in seen_products:
