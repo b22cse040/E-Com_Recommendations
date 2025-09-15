@@ -1,58 +1,43 @@
 import os
 import uuid
+import torch
+import torch.nn as nn
+import pandas as pd
 from tqdm import tqdm
 from dotenv import load_dotenv
 from elasticsearch import Elasticsearch
 from sentence_transformers import SentenceTransformer
+from transformers import AutoTokenizer, AutoModel
+from saved_crossencoder.FT_Ranker import CrossEncoder, load_ranker_model
 
-load_dotenv()
 
-prod_corpus = "../Corpus/prod_corpus.txt"
-query_corpus = "../Corpus/query_corpus.txt"
+# ======================================================
+# Embedding fn using CE Model
+# ======================================================
+def embed_text(text, model, tokenizer, device):
+  inputs = tokenizer(text, return_tensors="pt", truncation=True, padding=True).to(device)
+  with torch.no_grad():
+    outputs = model.encoder(**inputs)
+    pooled_output = outputs.last_hidden_state[:, 0, :] # [CLS] Token
+  return pooled_output.squeeze(0).cpu().tolist()
 
-embedding_model_name = os.getenv("EMBEDDING_MODEL_NAME")
-
-def extract_chunks_from_file(filepath):
-  with open(filepath, "r", encoding="utf-8") as f:
-    text = f.read()
-
-  # Split by  [CLS] and keep only non-empty pieces
-  raw_chunks = text.split("[CLS]")
-  chunks = []
-  for chunk in raw_chunks:
-    chunk = chunk.strip()
-    if chunk.endswith("[SEP]"):
-      chunk = chunk[:-5].strip() # remove "[SEP]"
-    if chunk:
-      chunks.append(chunk)
-  return chunks
-
-embedder = SentenceTransformer(embedding_model_name)
-def embed_text(text, embedder):
-  embeddings = embedder.encode(text)
-  return embeddings.tolist()
-
-# =========================================================================
-ca_certs = os.getenv("ELASTICSEARCH_CA_CERTIFICATE")
-es = Elasticsearch(
-    "https://localhost:9200",
-    basic_auth=("elastic", os.getenv("ELASTICSEARCH_PASSWORD")),
-    ca_certs=ca_certs,
-)
-# =========================================================================
-
-def create_index(es_client, index_name, embedding_dim=384):
+# ======================================================
+# ES Helpers
+# ======================================================
+def create_index(es_client, index_name, embedding_dim=768):
   if es_client.indices.exists(index=index_name):
     es_client.indices.delete(index=index_name)
-    print("Delete index " + index_name)
+    print("Deleted index " + index_name)
 
   mapping = {
     "mappings": {
       "properties": {
         "text": {"type": "text"},
         "embedding": {"type": "dense_vector", "dims": embedding_dim},
-        "type": {"type": "keyword"},
-        "uuid": {"type": "keyword"}
+        "type": {"type": "keyword"},  # query / product
+        "uuid": {"type": "keyword"},
+        # "esci_label": {"type": "keyword"},
+        "source": {"type": "keyword"}  # train/test
       }
     }
   }
@@ -60,32 +45,90 @@ def create_index(es_client, index_name, embedding_dim=384):
   es_client.indices.create(index=index_name, body=mapping)
   print(f"Index '{index_name}' created.")
 
-def index_chunk(es_client, index_name, text, embedding, chunk_type):
+def index_entry(es_client, index_name, text, embedding, chunk_type, source):
   doc = {
     "text": text,
     "embedding": embedding,
-    "type": chunk_type,
-    "uuid": str(uuid.uuid4())
+    "chunk_type": chunk_type,
+    "uuid": str(uuid.uuid4()),
+    "source": source,
   }
+
   es_client.index(index=index_name, body=doc)
 
-def process_and_index(file_path, index_name, chunk_type, embedder, es_client):
-  chunks = extract_chunks_from_file(file_path)
-  print(f"Extracted {len(chunks)} chunks from {file_path}")
+def process_and_index_dataset(
+    file_path, index_name, model, tokenizer, es_client,
+    device, source, seen_queries, seen_products
+):
+  df = pd.read_csv(file_path)
+  print(f"Loaded {len(df)} rows from {file_path}.")
 
-  for chunk in tqdm(chunks, desc=f"Indexing {chunk_type}", unit="chunk"):
-    embedding = embed_text(chunk, embedder)
-    index_chunk(es_client, index_name, chunk, embedding, chunk_type)
+  for _, row in tqdm(df.iterrows(), total=len(df), desc=f"Indexing {source}", unit="row"):
+    query_text = str(row["query"]).strip()
+    product_text = str(row["product_input"]).strip()
 
+    ## --- Handle Queries ---
+    if query_text and query_text not in seen_queries:
+      query_embedding = embed_text(query_text, model, tokenizer, device)
+      index_entry(es_client, index_name, query_text, query_embedding, chunk_type="query", source=source)
+      seen_queries.add(query_text)
+    else: continue
+
+    ## --- Handle Product information ---
+    if product_text and product_text not in seen_products:
+      product_embedding = embed_text(product_text, model, tokenizer, device)
+      index_entry(es_client, index_name, product_text, product_embedding, chunk_type="product", source=source)
+      seen_products.add(product_text)
+    else: continue
+
+  return
+
+# ======================================================
+# MAIN
+# ======================================================
 if __name__ == "__main__":
+  load_dotenv()
+
+  train_file = "../Corpus/filtered_train.csv"
+  test_file = "../Corpus/filtered_test.csv"
+  model_path = "../saved_crossencoder"
+
+  device = "cuda" if torch.cuda.is_available() else "cpu"
+  model, tokenizer = load_ranker_model(model_path, device=device)
+
+  ca_certs = os.getenv("ELASTICSEARCH_CA_CERTIFICATE")
+  es = Elasticsearch(
+    "https://localhost:9200",
+    basic_auth=("elastic", os.getenv("ELASTICSEARCH_PASSWORD")),
+    ca_certs=ca_certs,
+  )
+
   index_name = "corpus_chunks"
-  embedding_dim = 384
+  embedding_dim = model.encoder.config.hidden_size
   create_index(es, index_name, embedding_dim)
 
-  # Process product corpus
-  process_and_index(prod_corpus, index_name, "product", embedder, es)
+  seen_queries, seen_products = set(), set()
 
-  # Process query corpus
-  process_and_index(query_corpus, index_name, "query", embedder, es)
+  # process_and_index_dataset(
+  #   file_path=train_file,
+  #   index_name=index_name,
+  #   model=model,
+  #   tokenizer=tokenizer,
+  #   es_client=es,
+  #   device=device,
+  #   source="train",
+  #   seen_queries=seen_queries,
+  #   seen_products=seen_products
+  # )
 
-  print("All chunks indexed successfully.")
+  process_and_index_dataset(
+    file_path=test_file,
+    index_name=index_name,
+    model=model,
+    tokenizer=tokenizer,
+    es_client=es,
+    device=device,
+    source="test",
+    seen_queries=seen_queries,
+    seen_products=seen_products
+  )

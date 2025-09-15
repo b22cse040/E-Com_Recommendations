@@ -3,4 +3,12 @@ cmd.txt
 
 Corpus/
 
+saved_crossencoder/added_tokens.json
+saved_crossencoder/config.json
+saved_crossencoder/pytorch_model.bin
+saved_crossencoder/special_tokens_map.json
+saved_crossencoder/spm.model
+saved_crossencoder/tokenizer.json
+saved_crossencoder/tokenizer_config.json
+
 .idea/

@@ -120,3 +120,54 @@ Similar query (wall art fiji | Wall Art) response time: 0.1450 sec
 Similar query (picasso | Wall Art) response time: 0.0887 sec
 Total similar queries time: 0.3708 sec
 ---
+Query: A comfy sofa for a small apartment
+Main query response time: 7.1506 sec
+Similar queries response time: 0.0554 sec
+Similar query (sofa with ottoman | Sectionals) response time: 6.9973 sec
+Total similar queries time: 7.0527 sec
+---
+Query: Show me a durable easy to clean carpet for kids room
+Main query response time: 7.6438 sec
+Similar queries response time: 0.0489 sec
+Total similar queries time: 0.0489 sec
+---
+Query: A comfy sofa for small apartment
+Main query response time: 0.0852 sec
+Similar queries response time: 0.2141 sec
+Similar query (sofa with ottoman | Sectionals) response time: 0.1283 sec
+Total similar queries time: 0.3424 sec
+---
+Query: a comfy sofa for small apartment
+Main query response time: 0.0535 sec
+Similar queries response time: 0.0401 sec
+Similar query (sofa with ottoman | Sectionals) response time: 0.1009 sec
+Total similar queries time: 0.1410 sec
+---
+Query: Show me a durable easy to clean carpet for a kids room
+Main query response time: 0.0447 sec
+Similar queries response time: 0.0179 sec
+Total similar queries time: 0.0179 sec
+---
+Query: A comfy sofa for a small apartment
+Main query response time: 0.0721 sec
+Similar queries response time: 0.1380 sec
+Similar query (sofa with ottoman | Sectionals) response time: 0.1578 sec
+Total similar queries time: 0.2957 sec
+---
+Query: A comfy sofa for a small apartment
+Main query response time: 0.0164 sec
+Similar queries response time: 0.0204 sec
+Similar query (sofa with ottoman | Sectionals) response time: 0.0107 sec
+Total similar queries time: 0.0311 sec
+---
+Query: A durable easy to clean carpet for kids
+Main query response time: 0.0214 sec
+Similar queries response time: 0.0176 sec
+Total similar queries time: 0.0176 sec
+---
+Query: A comfy sofa for a small apartment
+Main query response time: 0.0544 sec
+Similar queries response time: 0.0196 sec
+Similar query (sofa with ottoman | Sectionals) response time: 0.0111 sec
+Total similar queries time: 0.0307 sec
+---
