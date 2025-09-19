@@ -7,12 +7,16 @@ from concurrent.futures import ThreadPoolExecutor
 from saved_crossencoder.FT_Ranker import CrossEncoder, load_ranker_model
 from src.vector_DB import embed_text
 
-ca_certs = os.getenv("ELASTICSEARCH_CA_CERTIFICATE")
-es = Elasticsearch(
-  "https://localhost:9200",
-  basic_auth=("elastic", os.getenv("ELASTICSEARCH_PASSWORD")),
-  ca_certs=ca_certs,
-)
+load_dotenv()
+def load_es():
+  ca_certs = os.getenv("ELASTICSEARCH_CA_CERTIFICATE")
+  es = Elasticsearch(
+    "https://localhost:9200",
+    basic_auth=("elastic", os.getenv("ELASTICSEARCH_PASSWORD")),
+    ca_certs=ca_certs,
+  )
+
+  return es
 
 def search_elasticsearch_embedding(query: str, model, model_tokenizer, device: str, top_k: int = 5) -> list[dict]:
   """

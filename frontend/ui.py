@@ -4,7 +4,7 @@ import time
 import threading
 import streamlit as st
 from dotenv import load_dotenv
-from src.llms.llms import form_response
+from src.llms import form_response
 from src.query_emb import search_similar_queries
 
 load_dotenv()
