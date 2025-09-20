@@ -1,25 +1,23 @@
 import os
 import uuid
 import torch
-import torch.nn as nn
 import pandas as pd
 from tqdm import tqdm
 from dotenv import load_dotenv
 from elasticsearch import Elasticsearch
 from sentence_transformers import SentenceTransformer
-from transformers import AutoTokenizer, AutoModel
-from saved_crossencoder.FT_Ranker import CrossEncoder, load_ranker_model
 
-
+load_dotenv()
+embedding_model_name = os.getenv("EMBEDDING_MODEL_NAME")
+embedder = SentenceTransformer(embedding_model_name)
+print(embedding_model_name)
 # ======================================================
-# Embedding fn using CE Model
+# Embedding Model
 # ======================================================
-def embed_text(text, model, tokenizer, device):
-  inputs = tokenizer(text, return_tensors="pt", truncation=True, max_length=128, padding="max_length").to(device)
+def embed_text(text, embedder, device):
   with torch.no_grad():
-    outputs = model.encoder(**inputs)
-    pooled_output = outputs.last_hidden_state[:, 0, :] # [CLS] Token
-  return pooled_output.squeeze(0).cpu().tolist()
+    vec = embedder.encode(text, convert_to_tensor=True, device=device, normalize_embeddings=True)
+    return vec.cpu().tolist()
 
 # ======================================================
 # ES Helpers
@@ -57,14 +55,14 @@ def index_entry(es_client, index_name, text, embedding, chunk_type, source):
   es_client.index(index=index_name, body=doc)
 
 def process_and_index_dataset(
-    file_path, index_name, model, tokenizer, es_client,
-    device, source, seen_queries, seen_products
+    file_path, index_name, embedder, es_client,
+    device, source, seen_products, # seen_queries,
 ):
   df = pd.read_csv(file_path)
   print(f"Loaded {len(df)} rows from {file_path}.")
 
   for _, row in tqdm(df.iterrows(), total=len(df), desc=f"Indexing {source}", unit="row"):
-    query_text = str(row["query"]).strip()
+    # query_text = str(row["query"]).strip()
     product_text = str(row["product_input"]).strip()
 
     # ## --- Handle Queries ---
@@ -76,7 +74,7 @@ def process_and_index_dataset(
 
     ## --- Handle Product information ---
     if product_text and product_text not in seen_products:
-      product_embedding = embed_text(product_text, model, tokenizer, device)
+      product_embedding = embed_text(product_text, embedder, device)
       index_entry(es_client, index_name, product_text, product_embedding, chunk_type="product", source=source)
       seen_products.add(product_text)
     else: continue
@@ -87,15 +85,14 @@ def process_and_index_dataset(
 # MAIN
 # ======================================================
 if __name__ == "__main__":
-  load_dotenv()
 
   train_file = "../Corpus/filtered_train.csv"
   test_file = "../Corpus/filtered_test.csv"
-  model_path = "../saved_crossencoder"
 
   device = "cuda" if torch.cuda.is_available() else "cpu"
-  model, tokenizer = load_ranker_model(model_path, device=device)
 
+  embedding_model_name = os.getenv("EMBEDDING_MODEL_NAME")
+  embedder = SentenceTransformer(embedding_model_name)
   ca_certs = os.getenv("ELASTICSEARCH_CA_CERTIFICATE")
   es = Elasticsearch(
     "https://localhost:9200",
@@ -104,8 +101,7 @@ if __name__ == "__main__":
   )
 
   index_name = "corpus_chunks"
-  embedding_dim = model.encoder.config.hidden_size
-  create_index(es, index_name, embedding_dim)
+  create_index(es, index_name, embedding_dim=384)
 
   seen_queries, seen_products = set(), set()
 
@@ -124,11 +120,9 @@ if __name__ == "__main__":
   process_and_index_dataset(
     file_path=test_file,
     index_name=index_name,
-    model=model,
-    tokenizer=tokenizer,
+    embedder=embedder,
     es_client=es,
     device=device,
     source="test",
-    seen_queries=seen_queries,
     seen_products=seen_products
   )

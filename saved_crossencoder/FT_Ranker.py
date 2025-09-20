@@ -1,5 +1,6 @@
 from transformers import AutoTokenizer, AutoModel
 import torch.nn as nn
+import torch.nn.functional as F
 import torch, os, json
 
 ## Building the CrossEncoder for inference
@@ -79,11 +80,15 @@ def rank_embeddings(query: str, model: CrossEncoder, tokenizer, top_hits: list[d
       torch.nn.functional.softmax(cls_logits, dim=-1), dim=-1
     ).cpu().numpy()
 
+    reg_scores = F.softplus(reg_logits)
+    reg_scores = F.normalize(reg_scores, p=2, dim=-1)  # L2 normalize
+    reg_scores = reg_scores.cpu().numpy().flatten()
+
   ranked_hits = []
   for hit, r_score, cls in zip(top_hits, reg_scores, cls_preds):
     ranked_hits.append({
       "content": hit["content"],
-      "cross_score": float(r_score),
+      "cross_score": float(cls),
     })
 
   ranked_hits.sort(key=lambda x: x["cross_score"], reverse=True)

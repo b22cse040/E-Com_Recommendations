@@ -112,9 +112,9 @@ def find_cached_similar_query(new_vector: np.ndarray, threshold=0.9):
 
 ## Inputs the prompt and Input to return a JSON like response
 ## that handles ranking of items.
-def form_response(query: str, model_name: str, model, tokenizer, device, ranker_prompt=_RANKER_PROMPT):
+def form_response(query: str, model_name: str, model, tokenizer, embedder, device, ranker_prompt=_RANKER_PROMPT):
   query = query.lower().strip()
-  query_vector = embed_text(query, model, tokenizer, device)
+  query_vector = embed_text(query, embedder, device)
   cached_response = find_cached_similar_query(query_vector)
   if cached_response:
     return cached_response
@@ -126,7 +126,7 @@ def form_response(query: str, model_name: str, model, tokenizer, device, ranker_
   print(expanded_query)
 
   # Finding the top-k results keyword and semantically
-  top_k_results = search_query(expanded_query, top_k=10, model=model, model_tokenizer=tokenizer, device="cpu")
+  top_k_results = search_query(expanded_query, top_k=10, embedder=embedder, device="cpu")
 
   top_k_results_ranked = rank_embeddings(query=query, model=model, tokenizer=tokenizer, device=device, max_len=128, top_hits=top_k_results)
   print(top_k_results_ranked)
@@ -149,11 +149,13 @@ def form_response(query: str, model_name: str, model, tokenizer, device, ranker_
   return final_results
 
 if __name__ == '__main__':
-  query = "outside screen for patio"
+  query = "headphones"
 
   model_name = os.getenv('MODEL_NAME')
 
-  results = form_response(query, model_name, model, tokenizer, device="cpu")
+  embedding_model_name = os.getenv("EMBEDDING_MODEL_NAME")
+  embedder = SentenceTransformer(embedding_model_name)
+  results = form_response(query, model_name, model, tokenizer, device="cpu", embedder=embedder, ranker_prompt=_RANKER_PROMPT)
   if not results:
     print("No valid products in the DB")
 

@@ -20,7 +20,7 @@ def load_es():
 
 es = load_es()
 
-def search_elasticsearch_embedding(query: str, model, model_tokenizer, device: str, top_k: int = 5) -> list[dict]:
+def search_elasticsearch_embedding(query: str, embedder: SentenceTransformer, device: str, top_k: int = 5) -> list[dict]:
   """
   Searching elasticsearch for embedding
   Args:
@@ -30,7 +30,7 @@ def search_elasticsearch_embedding(query: str, model, model_tokenizer, device: s
   Returns:
     Most likely list of embeddings
   """
-  query_embedding = embed_text(query, model, model_tokenizer, device)
+  query_embedding = embed_text(query, embedder, device)
   # knn_query = {
   #   "knn": {
   #     "field": "embedding",
@@ -105,12 +105,11 @@ def search_es_keywords(query: str, top_k: int = 5) -> list[dict]:
 ## Average time for parallel: 0.0589 sec, check evals directory
 ## Average time for sequentially: 0.1068 sec, check evals directory
 ## Optimization: 44.85% optimization in time
-def search_query(query: str, model, model_tokenizer, device, top_k: int = 5) -> list[dict]:
+def search_query(query: str, embedder: SentenceTransformer, device, top_k: int = 5) -> list[dict]:
   """
   Find the most relevant keyword and semantic hits for thw query in parallel.
   Args:
     query (str): The query to search for.
-    model_tokenizer (CrossEncoder): CrossEncoder model for tokenizing
     top_k: Gives the top k results for the query.
 
   Returns:
@@ -124,7 +123,7 @@ def search_query(query: str, model, model_tokenizer, device, top_k: int = 5) -> 
 
   with ThreadPoolExecutor(max_workers=2) as executor:
     start_time = time.time()
-    future_semantic = executor.submit(search_elasticsearch_embedding, query, model, model_tokenizer, device, top_k)
+    future_semantic = executor.submit(search_elasticsearch_embedding, query, embedder, device, top_k)
     future_keywords = executor.submit(search_es_keywords, query, top_k)
 
     semantic_hits = future_semantic.result()
@@ -201,16 +200,18 @@ if __name__ == "__main__":
 
   # EMBEDDING_MODEL_NAME = "all-MiniLM-L6-v2"
   # model = SentenceTransformer(EMBEDDING_MODEL_NAME)
-  model_file_path = "../saved_crossencoder"
-  model, tokenizer = load_ranker_model(model_file_path, device="cpu")
+  # model_file_path = "../saved_crossencoder"
+  # model, tokenizer = load_ranker_model(model_file_path, device="cpu")
 
+  embedding_model_name = os.getenv("EMBEDDING_MODEL_NAME")
+  embedder = SentenceTransformer(embedding_model_name)
 
   queries = [
-    "outside screen for patio"
+    "pencil case"
   ]
   #
   for query in queries:
-    hits = search_query(query, top_k=10, model_tokenizer=tokenizer, model=model, device="cpu")
+    hits = search_query(query, top_k=10, embedder=embedder, device="cpu")
     for hit in hits:
       print(f"{hit['content']}\nScore: {hit['score']:.4f}\n{'='*50}")
   # for query in queries:
