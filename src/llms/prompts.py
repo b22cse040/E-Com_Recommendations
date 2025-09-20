@@ -18,8 +18,7 @@ _RANKER_PROMPT = """
   Expected JSON format:
   {
     "obj1": {"Name": "Product Name 1", 
-    "Explanation": "Short customer-focused reason to consider this product", 
-    "score": A score between 0 to 1 that should explicitly be a float type}
+    "Explanation": "Short customer-focused reason to consider this product",
     ...
   }
 

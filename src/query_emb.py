@@ -18,6 +18,8 @@ def load_es():
 
   return es
 
+es = load_es()
+
 def search_elasticsearch_embedding(query: str, model, model_tokenizer, device: str, top_k: int = 5) -> list[dict]:
   """
   Searching elasticsearch for embedding

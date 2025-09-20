@@ -1,6 +1,6 @@
 from transformers import AutoTokenizer, AutoModel
 import torch.nn as nn
-import torch, os
+import torch, os, json
 
 ## Building the CrossEncoder for inference
 class CrossEncoder(nn.Module):
@@ -51,3 +51,40 @@ def load_ranker_model(model_path: str, device: str = "cpu"):
   model.to(device)
   model.eval()
   return model, tokenizer
+
+def rank_embeddings(query: str, model: CrossEncoder, tokenizer, top_hits: list[dict], device="cpu", max_len=128):
+  '''
+  Function to rank the embeddings using CrossEncoder model. top_hits comes from
+  search_query fn that returns the top-k/2 semantically and top-k/2 by keywords.
+  The purpose of this fn is to rank those embeddings using CrossEncoder model. The
+  output will is a ranked list of embeddings that will be given to the LLM, for personalization.
+  '''
+  products = [hit["content"] for hit in top_hits]
+
+  encoded = tokenizer(
+    [query] * len(products),
+    products,
+    padding="max_length",
+    return_tensors="pt",
+    max_length=max_len,
+    truncation=True,
+  ).to(device)
+
+  model.eval()
+  with torch.no_grad():
+    reg_logits, cls_logits = model(encoded["input_ids"], encoded["attention_mask"])
+    reg_scores = torch.nn.functional.softplus(
+      reg_logits).cpu().numpy().flatten()
+    cls_preds = torch.argmax(
+      torch.nn.functional.softmax(cls_logits, dim=-1), dim=-1
+    ).cpu().numpy()
+
+  ranked_hits = []
+  for hit, r_score, cls in zip(top_hits, reg_scores, cls_preds):
+    ranked_hits.append({
+      "content": hit["content"],
+      "cross_score": float(r_score),
+    })
+
+  ranked_hits.sort(key=lambda x: x["cross_score"], reverse=True)
+  return [{"content" : hit["content"]} for hit in ranked_hits]

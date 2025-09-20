@@ -4,11 +4,10 @@ from dotenv import load_dotenv
 from google import genai
 from redis import Redis
 from sentence_transformers import SentenceTransformer
-from elasticsearch import Elasticsearch
 from src.llms.prompts import _RANKER_PROMPT, _CONTEXT_PROVIDER_PROMPT
 from src.query_emb import search_query, load_es
 from src.vector_DB import embed_text
-from saved_crossencoder.FT_Ranker import CrossEncoder, load_ranker_model
+from saved_crossencoder.FT_Ranker import *
 
 model_file_path = r"D:\Sparkathon\saved_crossencoder"
 model, tokenizer = load_ranker_model(model_file_path)
@@ -20,7 +19,7 @@ model_name = os.getenv('MODEL_NAME')
 redis_client = Redis(host='localhost', port=6379, decode_responses=True)
 embedder = SentenceTransformer(embedder_model_name)
 
-load_es()
+es = load_es()
 # -----------------------------------------------------------------------
 ## Formats the input for LLM
 def form_query_input(query: str, top_k_results: list[dict]) -> str:
@@ -59,7 +58,7 @@ def clean_response(raw_text: str):
 
     name = obj_value["Name"]
     explanation = obj_value["Explanation"]
-    score = obj_value["score"]
+    # score = obj_value["score"]
 
     if isinstance(explanation, str):
       explanation = explanation.strip()
@@ -67,17 +66,17 @@ def clean_response(raw_text: str):
       name = name.strip()
 
     # print(f"Type before float conversion: {type(score)}")
-    if isinstance(score, (int, float, np.integer, np.floating)):
-      score = float(score)
+    # if isinstance(score, (int, float, np.integer, np.floating)):
+    #   score = float(score)
     # print(f"Type before float conversion: {type(score)}")
 
-    if score < 0 or score > 1:
-      continue
+    # if score < 0 or score > 1:
+    #   continue
 
     final_results[obj_key] = {
       "Name": name,
       "Explanation": explanation,
-      "score": score,
+      # "score": score,
     }
 
   return json.dumps(final_results, indent=2)
@@ -129,8 +128,11 @@ def form_response(query: str, model_name: str, model, tokenizer, device, ranker_
   # Finding the top-k results keyword and semantically
   top_k_results = search_query(expanded_query, top_k=10, model=model, model_tokenizer=tokenizer, device="cpu")
 
+  top_k_results_ranked = rank_embeddings(query=query, model=model, tokenizer=tokenizer, device=device, max_len=128, top_hits=top_k_results)
+  print(top_k_results_ranked)
+
   # forming input for LLM -> LLM(prompt + input)
-  input_text = ranker_prompt + form_query_input(query, top_k_results)
+  input_text = ranker_prompt + form_query_input(query, top_k_results_ranked)
 
   # Generating response
   response=client.models.generate_content(
@@ -161,4 +163,4 @@ if __name__ == '__main__':
       print(f"--- {obj_key} ---")
       print(f"Name: {obj_value['Name']}")
       print(f"Explanation: {obj_value['Explanation']}")
-      print(f"Score: {obj_value['score']}")
+      # print(f"Score: {obj_value['score']}")
