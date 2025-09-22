@@ -4,8 +4,10 @@ import threading
 import redis
 from dotenv import load_dotenv
 from flask import Flask, render_template, request, jsonify
-from frontend.logic import process_main_query, fetch_similar_queries, save_logs
+from frontend.logic import process_main_query, save_logs
 from src.speech import fetch_query_by_voice
+from sentence_transformers import SentenceTransformer
+from saved_crossencoder.FT_Ranker import load_ranker_model
 
 load_dotenv()
 model_name = os.getenv("MODEL_NAME")
@@ -14,6 +16,13 @@ redis_host = os.getenv("REDIS_HOST")
 redis_port = os.getenv("REDIS_PORT")
 redis_db = os.getenv("REDIS_DB")
 redis_client = redis.Redis(host=redis_host, port=6379, db=0)
+
+load_dotenv()
+embedder_model_name = os.getenv('EMBEDDING_MODEL_NAME')
+embedder = SentenceTransformer(embedder_model_name)
+
+model, tokenizer = load_ranker_model(r"D:\Sparkathon\saved_crossencoder")
+
 
 app = Flask(__name__, static_url_path='/static')
 
@@ -32,31 +41,31 @@ def index():
       return render_template("error.html", message="Please enter a query.")
 
     try:
-      results, main_logs = process_main_query(user_query, model_name)
+      results, main_logs = process_main_query(user_query, model_name, ranker_model=model, tokenizer=tokenizer, embedder=embedder, device="cpu")
 
       holder = {}
 
-      def fetch_sim():
-        similar_queries, similar_responses, sim_logs = fetch_similar_queries(
-            user_query, model_name)
-        holder["similar_queries"] = similar_queries
-        holder["similar_responses"] = similar_responses
-        holder["sim_logs"] = sim_logs
+      # def fetch_sim():
+      #   similar_queries, similar_responses, sim_logs = fetch_similar_queries(
+      #       user_query, model_name)
+      #   holder["similar_queries"] = similar_queries
+      #   holder["similar_responses"] = similar_responses
+      #   holder["sim_logs"] = sim_logs
 
-      thread = threading.Thread(target=fetch_sim)
-      thread.start()
-      thread.join()
+      # thread = threading.Thread(target=fetch_sim)
+      # thread.start()
+      # thread.join()
 
       # Save logs
-      full_logs = main_logs + holder["sim_logs"]
+      full_logs = main_logs # + holder["sim_logs"]
       save_logs(user_query, full_logs)
 
       return render_template(
           "result2.html",
           user_query=user_query,
           results=results,
-          similar_queries=holder["similar_queries"],
-          similar_responses_json=json.dumps(holder["similar_responses"])
+          # similar_queries=holder["similar_queries"],
+          # similar_responses_json=json.dumps(holder["similar_responses"])
       )
     except Exception as e:
       return render_template("error.html", message=str(e))
