@@ -62,7 +62,7 @@ def fetch_similar_queries(query, model_name):
   logs.append(f"Total similar queries time: {time.time() - start_time:.4f} sec")
   return similar_queries, similar_responses, logs
 
-def save_logs(query, logs, filepath=r"D:\Sparkathon\evals\frontend_time.txt"):
+def save_logs(query, logs, filepath=r"../evals/frontend_time.txt"):
   with open(filepath, "a") as f:
     f.write(f"Query: {query}\n")
     for line in logs:

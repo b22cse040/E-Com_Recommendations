@@ -21,7 +21,7 @@ load_dotenv()
 embedder_model_name = os.getenv('EMBEDDING_MODEL_NAME')
 embedder = SentenceTransformer(embedder_model_name)
 
-model, tokenizer = load_ranker_model(r"D:\Sparkathon\saved_crossencoder")
+model, tokenizer = load_ranker_model(r"../saved_crossencoder")
 
 
 app = Flask(__name__, static_url_path='/static')
@@ -41,7 +41,7 @@ def index():
       return render_template("error.html", message="Please enter a query.")
 
     try:
-      results, main_logs = process_main_query(user_query, model_name, ranker_model=model, tokenizer=tokenizer, embedder=embedder, device="cpu")
+      results, main_logs = process_main_query(user_query, model_name, ranker_model=model, tokenizer=tokenizer, embedder=embedder, device="cpu", redis_client=redis_client)
 
       holder = {}
 
@@ -157,4 +157,4 @@ def view_activity():
 
 
 if __name__ == "__main__":
-  app.run(debug=True)
+  app.run(debug=True, use_reloader=False)

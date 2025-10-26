@@ -34,6 +34,8 @@ def load_ranker_model(model_path: str, device: str = "cpu"):
   """
   ## Load encoder back-bone
   encoder = AutoModel.from_pretrained(model_path, local_files_only=True)
+  if encoder is None:
+    print(f"Could not load {model_path}")
 
   ## Load Tokenizer
   tokenizer = AutoTokenizer.from_pretrained(model_path, local_files_only=True)
