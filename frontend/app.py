@@ -8,6 +8,7 @@ from frontend.logic import process_main_query, save_logs
 from src.speech import fetch_query_by_voice
 from sentence_transformers import SentenceTransformer
 from saved_crossencoder.FT_Ranker import load_ranker_model
+from src.DB.logging_interaction import actions_collection
 
 load_dotenv()
 model_name = os.getenv("MODEL_NAME")
@@ -17,7 +18,6 @@ redis_port = os.getenv("REDIS_PORT")
 redis_db = os.getenv("REDIS_DB")
 redis_client = redis.Redis(host=redis_host, port=6379, db=0)
 
-load_dotenv()
 embedder_model_name = os.getenv('EMBEDDING_MODEL_NAME')
 embedder = SentenceTransformer(embedder_model_name)
 
@@ -87,6 +87,9 @@ def product_action():
   data = request.get_json()
   product_name = data["product"]
   action = data["action"]
+  query = data.get("query", "unknown")
+  if query == "unknown":
+    print(f"Invalid query: {query}")
 
   if not product_name or not action:
     return jsonify({
@@ -96,51 +99,46 @@ def product_action():
 
   if action == "AddToCart":
     redis_client.rpush("cart", product_name)
-    return jsonify({
-        "status": "success",
-        "message": f"Product '{product_name}' added to cart!"
-    })
+    message = f"Product '{product_name}' added to cart!"
 
   elif action == "RemoveFromCart":
     redis_client.lrem("cart", 0, product_name)
-    return jsonify({
-        "status": "success",
-        "message": f"Product '{product_name}' removed from cart!"
-    })
+    message = f"Product '{product_name}' removed from cart!"
 
   elif action == "Like":
     redis_client.rpush("liked", product_name)
-    return jsonify({
-        "status": "success",
-        "message": f"Product '{product_name}' liked!"
-    })
+    message = f"Product '{product_name}' liked!"
+    label = 1
 
   elif action == "Dislike":
     redis_client.rpush("disliked", product_name)
-    return jsonify({
-        "status": "success",
-        "message": f"Product '{product_name}' disliked!"
-    })
+    message = f"Product '{product_name}' disliked!"
+    label = 0
 
   elif action == "RemoveFromLiked":
     redis_client.lrem("liked", 0, product_name)
-    return jsonify({
-        "status": "success",
-        "message": f"Removed '{product_name}' from liked items."
-    })
+    message = f"Removed '{product_name}' from liked items."
 
   elif action == "RemoveFromDisliked":
     redis_client.lrem("disliked", 0, product_name)
-    return jsonify({
-        "status": "success",
-        "message": f"Removed '{product_name}' from disliked items."
-    })
+    message = f"Removed '{product_name}' from disliked items."
 
-  else:
-    return jsonify({
-        "status": "error",
-        "message": "Invalid action!"
-    }), 400
+  # --- Log to MongoDB only for like/Dislike for Incremental Learning
+  if action in ["Like", "Dislike"]:
+    try:
+      log_entry = {
+        "query": query,
+        "product_info" : product_name,
+        "label" : label,
+      }
+      actions_collection.insert_one(log_entry)
+    except Exception as e:
+      print(f"Mongo Failed: {str(e)}")
+
+  return jsonify({
+      "status": "success",
+      "message": message
+  }), 400
 
 
 @app.route("/view-activity")

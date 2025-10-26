@@ -21,7 +21,7 @@ def form_query_input(query: str, top_k_results: list[dict]) -> str:
       input += f"{key}: {value}\n"
   return input
 
-def expand_query(query: str, client: genai.client) -> str:
+def expand_query(query: str, client: genai.client, model_name: str) -> str:
   query = query.lower().strip()
   expanded_query = client.models.generate_content(
     model=model_name,
@@ -114,7 +114,7 @@ def form_response(query: str, model_name: str, ranker_model, tokenizer, embedder
   client = genai.Client()
 
   ## Adding more context to the query so as to obtain better embeddings
-  expanded_query = expand_query(query, client)
+  expanded_query = expand_query(query, client, model_name=model_name)
   print(expanded_query)
 
   # Finding the top-k results keyword and semantically

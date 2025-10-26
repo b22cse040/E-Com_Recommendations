@@ -4,8 +4,8 @@ import time
 import threading
 import streamlit as st
 from dotenv import load_dotenv
-from src.llms import form_response
-from src.query_emb import search_similar_queries
+from src.llm_call import form_response
+# from src.query_emb import search_similar_queries
 
 load_dotenv()
 model_name = os.getenv('MODEL_NAME')

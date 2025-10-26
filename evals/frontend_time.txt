@@ -177,3 +177,12 @@ Main query response time: 9.4129 sec
 Query: Headphones
 Main query response time: 0.0356 sec
 ---
+Query: Wall art
+Main query response time: 11.2167 sec
+---
+Query: Wall art
+Main query response time: 0.1841 sec
+---
+Query: Wall art
+Main query response time: 0.1491 sec
+---
