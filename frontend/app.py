@@ -87,7 +87,7 @@ def product_action():
   data = request.get_json()
   product_name = data["product"]
   action = data["action"]
-  query = data.get("query", "unknown")
+  query = data.get("query", "Wall Art")
   if query == "unknown":
     print(f"Invalid query: {query}")
 

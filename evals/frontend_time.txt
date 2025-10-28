@@ -186,3 +186,6 @@ Main query response time: 0.1841 sec
 Query: Wall art
 Main query response time: 0.1491 sec
 ---
+Query: Wall art
+Main query response time: 0.0302 sec
+---
