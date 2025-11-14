@@ -4,6 +4,7 @@
 
 {% block content %}
 <h1 class="page-title">Results for: <b>{{ user_query }}</b></h1>
+
 {% if results %}
 <div class="card-grid">
 	{% for key, val in results.items() %}
@@ -11,12 +12,23 @@
 		<h3>{{ val['Name'] }}</h3>
 		<p><b>Why?</b> {{ val['Explanation'] }}</p>
 		<div class="action-buttons">
-			<button class="btn btn-action js-product-action" data-product-name="{{ val['Name'] }}" data-action="Like"><i
-					class="fas fa-thumbs-up"></i> Like</button>
-			<button class="btn btn-action js-product-action" data-product-name="{{ val['Name'] }}"
-				data-action="Dislike"><i class="fas fa-thumbs-down"></i> Dislike</button>
-			<button class="btn btn-action js-product-action" data-product-name="{{ val['Name'] }}"
-				data-action="AddToCart"><i class="fas fa-shopping-cart"></i> Cart</button>
+			<button class="btn btn-action js-product-action"
+			        data-product-name="{{ val['Name'] }}"
+			        data-action="Like">
+			        <i class="fas fa-thumbs-up"></i> Like
+			</button>
+
+			<button class="btn btn-action js-product-action"
+			        data-product-name="{{ val['Name'] }}"
+			        data-action="Dislike">
+			        <i class="fas fa-thumbs-down"></i> Dislike
+			</button>
+
+			<button class="btn btn-action js-product-action"
+			        data-product-name="{{ val['Name'] }}"
+			        data-action="AddToCart">
+			        <i class="fas fa-shopping-cart"></i> Cart
+			</button>
 		</div>
 	</div>
 	{% endfor %}
@@ -42,8 +54,18 @@
 {% endblock %}
 
 {% block scripts %}
+
+<!-- Inject the real query so product-action can log it to MongoDB -->
+<script>
+	const currentUserQuery = "{{ user_query }}";
+</script>
+
 <script>
 	document.addEventListener('click', function (event) {
+
+		/* ------------------------------
+		   PRODUCT ACTION (Like / Dislike / Cart)
+		   ------------------------------ */
 		const productActionButton = event.target.closest('.js-product-action');
 		if (productActionButton) {
 			event.preventDefault();
@@ -53,14 +75,24 @@
 			fetch('/product-action', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ product: productName, action: action })
+				body: JSON.stringify({
+					product: productName,
+					action: action,
+					query: currentUserQuery
+				})
 			})
 				.then(response => response.json())
 				.then(data => { alert(data.message); })
-				.catch(error => { console.error('Error:', error); alert("Failed to record action."); });
+				.catch(error => {
+					console.error('Error:', error);
+					alert("Failed to record action.");
+				});
 			return;
 		}
 
+		/* ------------------------------
+		   SHOW SIMILAR QUERY RESULTS
+		   ------------------------------ */
 		const showSimilarButton = event.target.closest('.js-show-similar');
 		if (showSimilarButton) {
 			event.preventDefault();
@@ -68,35 +100,56 @@
 
 			const responses = JSON.parse(document.getElementById("similarResponses").textContent);
 			let container = document.getElementById("similarResults");
+
 			let resultsHTML = `<h2 class="page-title">Results for: <b>${simQuery}</b></h2>`;
 			let res = responses[simQuery];
+
 			if (!res || Object.keys(res).length === 0) {
 				resultsHTML += "<p style='text-align:center;'>No products found for this query.</p>";
 			} else {
 				let cardGrid = '<div class="card-grid">';
+
 				for (const key in res) {
 					const productName = res[key]["Name"];
-					// THIS LINE IS THE FIX: Escapes double quotes for safe use in the HTML attribute.
 					const safeProductName = productName.replace(/"/g, '"');
+
 					cardGrid += `
-                        <div class="card-base">
-                            <h3>${productName}</h3>
-                            <p><b>Why?</b> ${res[key]["Explanation"]}</p>
-                            <div class="action-buttons">
-                                <button class="btn btn-action js-product-action" data-product-name="${safeProductName}" data-action="Like"><i class="fas fa-thumbs-up"></i> Like</button>
-                                <button class="btn btn-action js-product-action" data-product-name="${safeProductName}" data-action="Dislike"><i class="fas fa-thumbs-down"></i> Dislike</button>
-                                <button class="btn btn-action js-product-action" data-product-name="${safeProductName}" data-action="AddToCart"><i class="fas fa-shopping-cart"></i> Cart</button>
-                            </div>
-                        </div>
-                    `;
+						<div class="card-base">
+							<h3>${productName}</h3>
+							<p><b>Why?</b> ${res[key]["Explanation"]}</p>
+							<div class="action-buttons">
+								<button class="btn btn-action js-product-action"
+								        data-product-name="${safeProductName}"
+								        data-action="Like">
+								    <i class="fas fa-thumbs-up"></i> Like
+								</button>
+
+								<button class="btn btn-action js-product-action"
+								        data-product-name="${safeProductName}"
+								        data-action="Dislike">
+								    <i class="fas fa-thumbs-down"></i> Dislike
+								</button>
+
+								<button class="btn btn-action js-product-action"
+								        data-product-name="${safeProductName}"
+								        data-action="AddToCart">
+								    <i class="fas fa-shopping-cart"></i> Cart
+								</button>
+							</div>
+						</div>
+					`;
 				}
+
 				cardGrid += '</div>';
 				resultsHTML += cardGrid;
 			}
+
 			container.innerHTML = resultsHTML;
 			container.scrollIntoView({ behavior: 'smooth', block: 'start' });
 			return;
 		}
+
 	});
 </script>
+
 {% endblock %}
