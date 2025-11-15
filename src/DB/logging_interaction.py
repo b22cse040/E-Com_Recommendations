@@ -19,6 +19,7 @@ smtp_port = int(os.getenv("SMTP_PORT", 587))
 mongo_client = MongoClient(mongo_uri)
 mongo_action_db = mongo_client[mongo_db_action]
 actions_collection = mongo_action_db["actions"]
+users_collection = mongo_action_db["users"]
 
 
 def notify_incremental(threshold: int, email: str) -> None:

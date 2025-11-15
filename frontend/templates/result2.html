@@ -7,149 +7,70 @@
 
 {% if results %}
 <div class="card-grid">
-	{% for key, val in results.items() %}
-	<div class="card-base">
-		<h3>{{ val['Name'] }}</h3>
-		<p><b>Why?</b> {{ val['Explanation'] }}</p>
-		<div class="action-buttons">
-			<button class="btn btn-action js-product-action"
-			        data-product-name="{{ val['Name'] }}"
-			        data-action="Like">
-			        <i class="fas fa-thumbs-up"></i> Like
-			</button>
+    {% for key, val in results.items() %}
+    <div class="card-base">
+        <h3>{{ val['Name'] }}</h3>
+        <p><b>Why?</b> {{ val['Explanation'] }}</p>
 
-			<button class="btn btn-action js-product-action"
-			        data-product-name="{{ val['Name'] }}"
-			        data-action="Dislike">
-			        <i class="fas fa-thumbs-down"></i> Dislike
-			</button>
+        <div class="action-buttons">
 
-			<button class="btn btn-action js-product-action"
-			        data-product-name="{{ val['Name'] }}"
-			        data-action="AddToCart">
-			        <i class="fas fa-shopping-cart"></i> Cart
-			</button>
-		</div>
-	</div>
-	{% endfor %}
+            <!-- LIKE -->
+            <button class="btn btn-action js-product-action"
+                data-product-name="{{ val['Name'] }}"
+                data-action="Like">
+                <i class="fas fa-thumbs-up"></i> Like
+            </button>
+
+            <!-- DISLIKE -->
+            <button class="btn btn-action js-product-action"
+                data-product-name="{{ val['Name'] }}"
+                data-action="Dislike">
+                <i class="fas fa-thumbs-down"></i> Dislike
+            </button>
+
+            <!-- CART -->
+            <button class="btn btn-action js-product-action"
+                data-product-name="{{ val['Name'] }}"
+                data-action="AddToCart">
+                <i class="fas fa-shopping-cart"></i> Cart
+            </button>
+
+        </div>
+    </div>
+    {% endfor %}
 </div>
 {% else %}
 <p style="text-align: center;">No valid products found. Please try another search.</p>
 {% endif %}
-
-{% if similar_queries %}
-<div class="similar-queries-section">
-	<h2 class="page-title" style="font-size: 1.5rem; margin-bottom: 1.5rem;">Users also searched for:</h2>
-	<div class="btn-group">
-		{% for sim in similar_queries %}
-		<button class="btn btn-tag js-show-similar" data-sim-query="{{ sim }}">{{ sim }}</button>
-		{% endfor %}
-	</div>
-</div>
-{% endif %}
-
-<div id="similarResults" style="margin-top: 40px;"></div>
-
-<pre id="similarResponses" style="display:none;">{{ similar_responses_json|safe }}</pre>
 {% endblock %}
 
+
 {% block scripts %}
-
-<!-- Inject the real query so product-action can log it to MongoDB -->
 <script>
-	const currentUserQuery = "{{ user_query }}";
+    const currentUserQuery = "{{ user_query }}";
+
+    document.addEventListener("click", function (event) {
+        const btn = event.target.closest(".js-product-action");
+        if (!btn) return;
+
+        const productName = btn.dataset.productName;
+        const action = btn.dataset.action;
+
+        fetch("/product-action", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                product: productName,
+                action: action,
+                query: currentUserQuery
+            })
+        })
+        .then(res => res.json())
+        .then(data => alert(data.message))
+        .catch(err => {
+            console.error(err);
+            alert("Failed to send action");
+        });
+    });
 </script>
-
-<script>
-	document.addEventListener('click', function (event) {
-
-		/* ------------------------------
-		   PRODUCT ACTION (Like / Dislike / Cart)
-		   ------------------------------ */
-		const productActionButton = event.target.closest('.js-product-action');
-		if (productActionButton) {
-			event.preventDefault();
-			const productName = productActionButton.dataset.productName;
-			const action = productActionButton.dataset.action;
-
-			fetch('/product-action', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					product: productName,
-					action: action,
-					query: currentUserQuery
-				})
-			})
-				.then(response => response.json())
-				.then(data => { alert(data.message); })
-				.catch(error => {
-					console.error('Error:', error);
-					alert("Failed to record action.");
-				});
-			return;
-		}
-
-		/* ------------------------------
-		   SHOW SIMILAR QUERY RESULTS
-		   ------------------------------ */
-		const showSimilarButton = event.target.closest('.js-show-similar');
-		if (showSimilarButton) {
-			event.preventDefault();
-			const simQuery = showSimilarButton.dataset.simQuery;
-
-			const responses = JSON.parse(document.getElementById("similarResponses").textContent);
-			let container = document.getElementById("similarResults");
-
-			let resultsHTML = `<h2 class="page-title">Results for: <b>${simQuery}</b></h2>`;
-			let res = responses[simQuery];
-
-			if (!res || Object.keys(res).length === 0) {
-				resultsHTML += "<p style='text-align:center;'>No products found for this query.</p>";
-			} else {
-				let cardGrid = '<div class="card-grid">';
-
-				for (const key in res) {
-					const productName = res[key]["Name"];
-					const safeProductName = productName.replace(/"/g, '"');
-
-					cardGrid += `
-						<div class="card-base">
-							<h3>${productName}</h3>
-							<p><b>Why?</b> ${res[key]["Explanation"]}</p>
-							<div class="action-buttons">
-								<button class="btn btn-action js-product-action"
-								        data-product-name="${safeProductName}"
-								        data-action="Like">
-								    <i class="fas fa-thumbs-up"></i> Like
-								</button>
-
-								<button class="btn btn-action js-product-action"
-								        data-product-name="${safeProductName}"
-								        data-action="Dislike">
-								    <i class="fas fa-thumbs-down"></i> Dislike
-								</button>
-
-								<button class="btn btn-action js-product-action"
-								        data-product-name="${safeProductName}"
-								        data-action="AddToCart">
-								    <i class="fas fa-shopping-cart"></i> Cart
-								</button>
-							</div>
-						</div>
-					`;
-				}
-
-				cardGrid += '</div>';
-				resultsHTML += cardGrid;
-			}
-
-			container.innerHTML = resultsHTML;
-			container.scrollIntoView({ behavior: 'smooth', block: 'start' });
-			return;
-		}
-
-	});
-</script>
-
 {% endblock %}

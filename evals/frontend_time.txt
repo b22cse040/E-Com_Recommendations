@@ -195,3 +195,6 @@ Main query response time: 12.5558 sec
 Query: A comfy sofa for a small apartment
 Main query response time: 0.1183 sec
 ---
+Query: A comfy sofa for a small apartment
+Main query response time: 8.9463 sec
+---

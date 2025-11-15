@@ -3,156 +3,207 @@ import json
 import threading
 import redis
 from dotenv import load_dotenv
-from flask import Flask, render_template, request, jsonify
-from frontend.logic import process_main_query, save_logs
-from src.speech import fetch_query_by_voice
+from flask import Flask, render_template, request, jsonify, redirect, session
 from sentence_transformers import SentenceTransformer
 from saved_crossencoder.FT_Ranker import load_ranker_model
+
+# Custom modules
+from frontend.logic import process_main_query, save_logs
 from src.DB.logging_interaction import actions_collection
+from src.DB.auth import create_user, authenticate_user, update_user_likes
+from src.speech import fetch_query_by_voice
 
 load_dotenv()
+
+# Flask setup
+app = Flask(__name__, static_url_path='/static')
+app.secret_key = "super_secret_key_please_change"    # IMPORTANT: change in production
+
+# Redis setup
+redis_client = redis.Redis(
+    host=os.getenv("REDIS_HOST"),
+    port=int(os.getenv("REDIS_PORT_NO")),
+    db=int(os.getenv("REDIS_DB"))
+)
+
+# Models
 model_name = os.getenv("MODEL_NAME")
-
-redis_host = os.getenv("REDIS_HOST")
-redis_port = os.getenv("REDIS_PORT")
-redis_db = os.getenv("REDIS_DB")
-redis_client = redis.Redis(host=redis_host, port=6379, db=0)
-
-embedder_model_name = os.getenv('EMBEDDING_MODEL_NAME')
-embedder = SentenceTransformer(embedder_model_name)
-
+embedder = SentenceTransformer(os.getenv("EMBEDDING_MODEL_NAME"))
 model, tokenizer = load_ranker_model(r"../saved_crossencoder")
 
 
-app = Flask(__name__, static_url_path='/static')
+# -------------------------------------------------------
+# AUTH ROUTES
+# -------------------------------------------------------
+@app.route("/signup", methods=["GET", "POST"])
+def signup():
+    if request.method == "POST":
+        username = request.form.get("username")
+        password = request.form.get("password")
+        age = int(request.form.get("age"))
+        gender = request.form.get("gender")
+
+        success, msg = create_user(username, password, age, gender)
+        if success:
+            return redirect("/login")
+        return render_template("signup.html", error=msg)
+
+    return render_template("signup.html")
 
 
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        username = request.form.get("username")
+        password = request.form.get("password")
+
+        success, user = authenticate_user(username, password)
+
+        if success:
+            session["username"] = user["username"]
+            return redirect("/")
+
+        return render_template("login.html", error=user)
+
+    return render_template("login.html")
+
+
+@app.route("/logout")
+def logout():
+    session.pop("username", None)
+    return redirect("/login")
+
+
+# -------------------------------------------------------
+# ROOT SEARCH PAGE
+# -------------------------------------------------------
 @app.route("/", methods=["GET", "POST"])
 def index():
-  if request.method == "POST":
-    use_voice = request.form.get("use_voice", "false").lower() == "true"
+    if "username" not in session:
+        return redirect("/login")
 
-    if use_voice:
-      user_query = fetch_query_by_voice()
-    else:
-      user_query = request.form.get("query", "").strip()
+    if request.method == "POST":
+        use_voice = request.form.get("use_voice", "false").lower() == "true"
 
-    if not user_query:
-      return render_template("error.html", message="Please enter a query.")
+        if use_voice:
+            user_query = fetch_query_by_voice()
+        else:
+            user_query = request.form.get("query", "").strip()
 
-    try:
-      results, main_logs = process_main_query(user_query, model_name, ranker_model=model, tokenizer=tokenizer, embedder=embedder, device="cpu", redis_client=redis_client)
+        if not user_query:
+            return render_template("error.html", message="Please enter a query.")
 
-      holder = {}
+        try:
+            results, main_logs = process_main_query(
+                user_query,
+                model_name,
+                ranker_model=model,
+                tokenizer=tokenizer,
+                embedder=embedder,
+                device="cpu",
+                redis_client=redis_client
+            )
 
-      # def fetch_sim():
-      #   similar_queries, similar_responses, sim_logs = fetch_similar_queries(
-      #       user_query, model_name)
-      #   holder["similar_queries"] = similar_queries
-      #   holder["similar_responses"] = similar_responses
-      #   holder["sim_logs"] = sim_logs
+            save_logs(user_query, main_logs)
 
-      # thread = threading.Thread(target=fetch_sim)
-      # thread.start()
-      # thread.join()
+            return render_template(
+                "result2.html",
+                user_query=user_query,
+                results=results
+            )
+        except Exception as e:
+            return render_template("error.html", message=str(e))
 
-      # Save logs
-      full_logs = main_logs # + holder["sim_logs"]
-      save_logs(user_query, full_logs)
-
-      return render_template(
-          "result2.html",
-          user_query=user_query,
-          results=results,
-          # similar_queries=holder["similar_queries"],
-          # similar_responses_json=json.dumps(holder["similar_responses"])
-      )
-    except Exception as e:
-      return render_template("error.html", message=str(e))
-
-  return render_template("index.html")
+    return render_template("index.html")
 
 
-@app.route("/voice-capture", methods=["POST"])
-def voice_capture():
-  try:
-    query = fetch_query_by_voice()
-    return {"query": query}
-  except Exception as e:
-    return {"query": f"Error: {str(e)}"}
-
-
+# -------------------------------------------------------
+# PRODUCT ACTION API
+# -------------------------------------------------------
 @app.route("/product-action", methods=["POST"])
 def product_action():
-  data = request.get_json()
-  product_name = data["product"]
-  action = data["action"]
-  query = data.get("query", "Wall Art")
-  if query == "unknown":
-    print(f"Invalid query: {query}")
+    if "username" not in session:
+        return jsonify({"status": "error", "message": "Not logged in"}), 401
 
-  if not product_name or not action:
-    return jsonify({
-        "status": "error",
-        "message": "Missing product or action!"
-    })
+    data = request.get_json()
+    product_name = data["product"]
+    action = data["action"]
+    query = data.get("query", "unknown")
 
-  if action == "AddToCart":
-    redis_client.rpush("cart", product_name)
-    message = f"Product '{product_name}' added to cart!"
+    if not product_name or not action:
+        return jsonify({"status": "error", "message": "Missing fields"}), 400
 
-  elif action == "RemoveFromCart":
-    redis_client.lrem("cart", 0, product_name)
-    message = f"Product '{product_name}' removed from cart!"
+    username = session["username"]
 
-  elif action == "Like":
-    redis_client.rpush("liked", product_name)
-    message = f"Product '{product_name}' liked!"
-    label = 1
+    # ---- Redis updates ----
+    if action == "AddToCart":
+        redis_client.rpush("cart:"+username, product_name)
+        message = f"Added {product_name} to cart."
 
-  elif action == "Dislike":
-    redis_client.rpush("disliked", product_name)
-    message = f"Product '{product_name}' disliked!"
-    label = 0
+    elif action == "RemoveFromCart":
+        redis_client.lrem("cart:"+username, 0, product_name)
+        message = f"Removed {product_name} from cart."
 
-  elif action == "RemoveFromLiked":
-    redis_client.lrem("liked", 0, product_name)
-    message = f"Removed '{product_name}' from liked items."
+    elif action == "Like":
+        redis_client.rpush("liked:"+username, product_name)
+        message = f"You liked {product_name}."
+        label = 1
 
-  elif action == "RemoveFromDisliked":
-    redis_client.lrem("disliked", 0, product_name)
-    message = f"Removed '{product_name}' from disliked items."
+    elif action == "Dislike":
+        redis_client.rpush("disliked:"+username, product_name)
+        message = f"You disliked {product_name}."
+        label = 0
 
-  # --- Log to MongoDB only for like/Dislike for Incremental Learning
-  if action in ["Like", "Dislike"]:
-    try:
-      log_entry = {
-        "query": query,
-        "product_info" : product_name,
-        "label" : label,
-      }
-      actions_collection.insert_one(log_entry)
-    except Exception as e:
-      print(f"Mongo Failed: {str(e)}")
+    else:
+        return jsonify({"status": "error", "message": "Invalid action"}), 400
 
-  return jsonify({
-      "status": "success",
-      "message": message
-  }), 400
+    # ---- MongoDB logging ----
+    if action in ["Like", "Dislike"]:
+        try:
+            actions_collection.insert_one({
+                "username": username,
+                "query": query,
+                "product_info": product_name,
+                "label": label
+            })
+
+            update_user_likes(
+                username=username,
+                product_name=product_name,
+                like=(label == 1)
+            )
+        except Exception as e:
+            print(f"Mongo Failed: {str(e)}")
+
+    return jsonify({"status": "success", "message": message})
 
 
+# -------------------------------------------------------
+# VIEW USER ACTIVITY
+# -------------------------------------------------------
 @app.route("/view-activity")
 def view_activity():
-  cart_items = redis_client.lrange("cart", 0, -1)
-  liked_items = redis_client.lrange("liked", 0, -1)
-  disliked_items = redis_client.lrange("disliked", 0, -1)
+    if "username" not in session:
+        return redirect("/login")
 
-  cart_items = [item.decode("utf-8") for item in cart_items]
-  liked_items = [item.decode("utf-8") for item in liked_items]
-  disliked_items = [item.decode("utf-8") for item in disliked_items]
+    username = session["username"]
 
-  return render_template("activity.html", cart=cart_items, liked=liked_items, dislikes=disliked_items)
+    cart_items = redis_client.lrange("cart:"+username, 0, -1)
+    liked_items = redis_client.lrange("liked:"+username, 0, -1)
+    disliked_items = redis_client.lrange("disliked:"+username, 0, -1)
+
+    cart_items = [item.decode() for item in cart_items]
+    liked_items = [item.decode() for item in liked_items]
+    disliked_items = [item.decode() for item in disliked_items]
+
+    return render_template(
+        "activity.html",
+        cart=cart_items,
+        liked=liked_items,
+        dislikes=disliked_items
+    )
 
 
+# -------------------------------------------------------
 if __name__ == "__main__":
-  app.run(debug=True, use_reloader=False)
+    app.run(debug=True, use_reloader=False)
