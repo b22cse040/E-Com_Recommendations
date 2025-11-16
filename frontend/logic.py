@@ -10,13 +10,43 @@ load_dotenv()
 vit_ai_key = os.getenv("VIT_AI_KEY")
 
 
-def process_main_query(query: str, model_name: str, ranker_model, tokenizer, embedder, device, redis_client: Optional[Redis]):
-  logs = []
-  start_time = time.time()
-  raw_json_str = form_response(query, model_name, ranker_model=ranker_model, tokenizer=tokenizer, device=device, embedder=embedder, redis_client=redis_client)
-  results = json.loads(raw_json_str)
-  logs.append(f"Main query response time: {time.time() - start_time:.4f} sec")
-  return results, logs
+# def process_main_query(query: str, model_name: str, ranker_model, tokenizer, embedder, device, redis_client: Optional[Redis]):
+#   logs = []
+#   start_time = time.time()
+#   raw_json_str = form_response(query, model_name, ranker_model=ranker_model, tokenizer=tokenizer, device=device, embedder=embedder, redis_client=redis_client)
+#   results = json.loads(raw_json_str)
+#   logs.append(f"Main query response time: {time.time() - start_time:.4f} sec")
+#   return results, logs
+
+def process_main_query(
+    query: str,
+    model_name: str,
+    ranker_model,
+    tokenizer,
+    embedder,
+    device,
+    redis_client: Optional[Redis],
+    user_metadata: dict = None
+):
+    logs = []
+    start_time = time.time()
+
+    raw_json_str = form_response(
+      query,
+      model_name,
+      ranker_model=ranker_model,
+      tokenizer=tokenizer,
+      embedder=embedder,
+      device=device,
+      redis_client=redis_client,
+      user_metadata=user_metadata  # <-- IMPORTANT
+    )
+
+    results = json.loads(raw_json_str)
+    logs.append(f"Main query response time: {time.time() - start_time:.4f} sec")
+
+    return results, logs
+
 
 # def fetch_similar_queries(query, model_name):
 #   logs = []

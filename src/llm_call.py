@@ -103,7 +103,15 @@ def find_cached_similar_query(new_vector: np.ndarray, redis_client: Redis, thres
 
 ## Inputs the prompt and Input to return a JSON like response
 ## that handles ranking of items.
-def form_response(query: str, model_name: str, ranker_model, tokenizer, embedder, device, redis_client: Optional[Redis], ranker_prompt=_RANKER_PROMPT):
+def form_response(
+    query: str,
+    model_name: str,
+    ranker_model, tokenizer,
+    embedder, device,
+    redis_client: Optional[Redis],
+    user_metadata: dict = None,
+    ranker_prompt=_RANKER_PROMPT
+):
   query = query.lower().strip()
   query_vector = embed_text(query, embedder, device)
   if redis_client is not None:
@@ -123,8 +131,31 @@ def form_response(query: str, model_name: str, ranker_model, tokenizer, embedder
   top_k_results_ranked = rank_embeddings(query=query, model=ranker_model, tokenizer=tokenizer, device=device, max_len=128, top_hits=top_k_results)
   print(top_k_results_ranked)
 
+  # Inject User Metadata
+  if user_metadata is None:
+    user_metadata = {}
+
+  age = user_metadata.get("age", "unknown")
+  gender = user_metadata.get("gender", "unknown")
+  previous_liked = user_metadata.get("previous_liked", [])
+  previous_disliked = user_metadata.get("previous_disliked", [])
+
+  metadata_text = f"""
+  User Metadata:
+  - Age: {age}
+  - Gender: {gender}
+  - Previously Liked: {previous_liked}
+  - Previously Disliked: {previous_disliked}
+  """
+
   # forming input for LLM -> LLM(prompt + input)
-  input_text = ranker_prompt + form_query_input(query, top_k_results_ranked)
+  input_text = (
+    ranker_prompt
+    + '\n'
+    + metadata_text
+    + '\n'
+    + form_query_input(query, top_k_results_ranked)
+  )
 
   # Generating response
   response=client.models.generate_content(
