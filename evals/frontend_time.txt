@@ -204,3 +204,30 @@ Main query response time: 7.8746 sec
 Query: A comfy sofa for a small apartment
 Main query response time: 9.4817 sec
 ---
+Query: kettle
+Main query response time: 10.5604 sec
+---
+Query: electric kettle
+Main query response time: 13.8834 sec
+---
+Query: electric kettle
+Main query response time: 0.1102 sec
+---
+Query: A comfy sofa for a small apartment
+Main query response time: 16.3613 sec
+---
+Query: A comfy sofa for a small apartment
+Main query response time: 0.1808 sec
+---
+Query: electric kettle
+Main query response time: 16.1175 sec
+---
+Query: Wall art
+Main query response time: 14.7865 sec
+---
+Query: picasso | Wall art
+Main query response time: 14.3546 sec
+---
+Query: picasso | Wall art
+Main query response time: 0.1646 sec
+---

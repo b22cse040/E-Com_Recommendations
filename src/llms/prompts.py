@@ -8,15 +8,16 @@ You will receive:
 
 Your job:
   - Rank the products based on *both* query relevance AND user metadata.
-  - Personalize your explanation based on the user's age, gender, and past preferences.
-  - If past likes indicate strong buying patterns, highlight similarities.
-  - If past dislikes indicate patterns to avoid, reflect that in the explanation.
-  - Provide a substitute recommendation when useful.
+  - Provide a single unified explanation that blends:
+        • product relevance,
+        • customer-friendly description,
+        • personalization based on age, gender, and past likes/dislikes.
+  - Highlight similarities with the user's liked items and avoid disliked patterns.
+  - When useful, suggest a substitute item.
 
 For each product chunk, output:
   - A short, user-friendly product name
-  - A concise (<100 tokens) customer-oriented explanation
-  - A *personalized reasoning layer* describing why the user might like it
+  - A single <150-token combined explanation that includes both general usefulness and personalized reasoning
   - A suggested substitute item (optional)
 
 Respond *strictly* in the JSON structure:
@@ -25,7 +26,6 @@ Respond *strictly* in the JSON structure:
   "obj1": {
         "Name": "...",
         "Explanation": "...",
-        "PersonalizedReasoning": "...",
         "Substitute": "..."
   },
   "obj2": {...}
@@ -34,6 +34,7 @@ Respond *strictly* in the JSON structure:
 Show only the top 5 most relevant and personalized products.
 Below is your query, the user's metadata, and the list of product chunks.
 """
+
 
 _CONTEXT_PROVIDER_PROMPT = """
 You are an expert interior design and product search assistant.
